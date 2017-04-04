@@ -1,0 +1,14 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:viewmodels="clr-namespace:SecretHitler.App.ViewModels"
+                    xmlns:views="clr-namespace:SecretHitler.App.Views">
+
+    <DataTemplate DataType="{x:Type viewmodels:GameSurfaceViewModel}">
+        <views:GameSurfaceView />
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type viewmodels:HomeViewModel}">
+        <views:HomeView />
+    </DataTemplate>
+
+</ResourceDictionary>
