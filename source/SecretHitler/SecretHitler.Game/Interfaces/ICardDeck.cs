@@ -22,14 +22,14 @@ namespace SecretHitler.Game.Interfaces
         /// </summary>
         /// <param name="numCards">The number of cards to peek.</param>
         /// <returns>Cards at the top of the deck. If returning more than one card, the topmost card is at index 0.</returns>
-        IReadOnlyCollection<TCard> Peek(int numCards = 1);
+        IReadOnlyList<TCard> Peek(int numCards = 1);
 
         /// <summary>
         /// Draw cards from the top of the deck.
         /// </summary>
         /// <param name="numCards">The number of cards to draw.</param>
         /// <returns>Cards at the top of the deck. If returning more than one card, the topmost card is at index 0.</returns>
-        IReadOnlyCollection<TCard> Draw(int numCards = 1);
+        IReadOnlyList<TCard> Draw(int numCards = 1);
 
         /// <summary>
         /// Place cards onto the discard pile. These cards can/will be shuffled back in.

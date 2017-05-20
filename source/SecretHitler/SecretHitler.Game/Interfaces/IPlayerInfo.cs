@@ -1,4 +1,5 @@
 ﻿using System;
+using SecretHitler.Game.Enums;
 
 namespace SecretHitler.Game.Interfaces
 {
@@ -31,5 +32,10 @@ namespace SecretHitler.Game.Interfaces
         /// Is the player the chancellor?
         /// </summary>
         bool IsChancellor { get; }
+
+        /// <summary>
+        /// The player's role.
+        /// </summary>
+        PlayerRole? Role { get; }
     }
 }

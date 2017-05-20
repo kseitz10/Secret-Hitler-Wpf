@@ -1,4 +1,5 @@
 ﻿using System;
+using SecretHitler.Game.Enums;
 using SecretHitler.Game.Interfaces;
 
 namespace SecretHitler.Game.Entities
@@ -32,6 +33,11 @@ namespace SecretHitler.Game.Entities
         /// Is the player the chancellor?
         /// </summary>
         public bool IsChancellor { get; set; }
+
+        /// <summary>
+        /// The player's role.
+        /// </summary>
+        public PlayerRole? Role { get; set; }
 
         /// <summary>
         /// Players are considered equal if their GUID matches.

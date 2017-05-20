@@ -9,7 +9,7 @@ namespace SecretHitler.Game.Enums
     public enum GameState
     {
         None,
-        ChancellorElection,
+        ChancellorNomination,
         Voting,
         PresidentialPolicy,
         PolicyEnactment,

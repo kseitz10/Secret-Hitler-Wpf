@@ -30,5 +30,17 @@ namespace SecretHitler.Game.Utility
                 list[n] = value;
             }
         }
+
+        /// <summary>
+        /// A quick way to add a range of items.
+        /// </summary>
+        /// <typeparam name="T">Type of item.</typeparam>
+        /// <param name="list">List to which items are added.</param>
+        /// <param name="itemsToAdd">The items to add.</param>
+        public static void AddRange<T>(this ICollection<T> list, IEnumerable<T> itemsToAdd)
+        {
+            foreach (var i in itemsToAdd)
+                list.Add(i);
+        }
     }
 }

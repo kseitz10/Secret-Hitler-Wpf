@@ -10,6 +10,14 @@ namespace SecretHitler.Game.Entities
     public class Game
     {
         /// <summary>
+        /// Default constructor.
+        /// </summary>
+        public Game()
+        {
+            PolicyDeck = new PolicyDeck(DrawPile, DiscardPile, true);
+        }
+
+        /// <summary>
         /// All known players.
         /// </summary>
         public List<Player> Players { get; set; } = new List<Player>();
@@ -22,12 +30,12 @@ namespace SecretHitler.Game.Entities
         /// <summary>
         /// List of items currently in the draw pile. Index 0 represents the bottom.
         /// </summary>
-        public IList<PolicyType> DrawPile { get; set; } = new List<PolicyType>();
+        public IList<PolicyType> DrawPile { get; set; }
 
         /// <summary>
         /// List of items currently in the discard pile. Index 0 represents the bottom.
         /// </summary>
-        public IList<PolicyType> DiscardPile { get; set; } = new List<PolicyType>();
+        public IList<PolicyType> DiscardPile { get; set; }
 
         /// <summary>
         /// The number of enacted liberal policies.
@@ -48,5 +56,10 @@ namespace SecretHitler.Game.Entities
         /// Players ineligible to serve as chancellor due to term limits.
         /// </summary>
         public IList<Guid> IneligibleChancellors { get; set; } = new List<Guid>();
+
+        /// <summary>
+        /// The policy draw and discard piles.
+        /// </summary>
+        public PolicyDeck PolicyDeck { get; set; }
     }
 }

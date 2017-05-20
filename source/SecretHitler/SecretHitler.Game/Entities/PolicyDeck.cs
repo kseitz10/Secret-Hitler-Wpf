@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using SecretHitler.Game.Enums;
 using SecretHitler.Game.Interfaces;
@@ -13,15 +14,38 @@ namespace SecretHitler.Game.Entities
     {
         public const int TotalLiberalPolicies = 6;
         public const int TotalFascistPolicies = 11;
-        private List<PolicyType> _policyDeck;
-        private List<PolicyType> _discardDeck;
+        private readonly IList<PolicyType> _policyDeck;
+        private readonly IList<PolicyType> _discardDeck;
 
         /// <summary>
-        /// Constructs a policy deck.
+        /// Constructs a policy deck with internal storage.
         /// </summary>
         public PolicyDeck()
         {
+            _policyDeck = new List<PolicyType>();
+            _discardDeck = new List<PolicyType>();
             Reset();
+        }
+
+        /// <summary>
+        /// Constructs a policy deck
+        /// </summary>
+        /// <param name="draw">
+        /// The draw pile.
+        /// </param>
+        /// <param name="discard">
+        /// The discard pile.
+        /// </param>
+        /// <param name="reset">
+        /// Whether or not the decks should be reset to the default.
+        /// </param>
+        public PolicyDeck(IList<PolicyType> draw, IList<PolicyType> discard, bool reset)
+        {
+            _policyDeck = draw ?? throw new ArgumentNullException(nameof(draw));
+            _discardDeck = discard ?? throw new ArgumentNullException(nameof(discard));
+
+            if (reset)
+                Reset();
         }
 
         /// <summary>
@@ -41,9 +65,10 @@ namespace SecretHitler.Game.Entities
         {
             var _fascistCards = Enumerable.Range(1, TotalFascistPolicies).Select(_ => PolicyType.Fascist);
             var _liberalCards = Enumerable.Range(1, TotalLiberalPolicies).Select(_ => PolicyType.Liberal);
-            _policyDeck = _fascistCards.Concat(_liberalCards).ToList();
+            _policyDeck.Clear();
+            _policyDeck.AddRange(_fascistCards.Concat(_liberalCards));
             _policyDeck.Shuffle();
-            _discardDeck = new List<PolicyType>();
+            _discardDeck.Clear();
         }
 
         /// <summary>
@@ -60,7 +85,7 @@ namespace SecretHitler.Game.Entities
         /// </summary>
         /// <param name="numCards">The number of cards to peek.</param>
         /// <returns>Cards at the top of the deck. If returning more than one card, the topmost card is at index 0.</returns>
-        public IReadOnlyCollection<PolicyType> Peek(int numCards = 1)
+        public IReadOnlyList<PolicyType> Peek(int numCards = 1)
         {
             ShuffleIfNeeded(numCards);
             return _policyDeck.Take(numCards).ToArray();
@@ -71,11 +96,14 @@ namespace SecretHitler.Game.Entities
         /// </summary>
         /// <param name="numCards">The number of cards to draw.</param>
         /// <returns>Cards at the top of the deck. If returning more than one card, the topmost card is at index 0.</returns>
-        public IReadOnlyCollection<PolicyType> Draw(int numCards = 1)
+        public IReadOnlyList<PolicyType> Draw(int numCards = 1)
         {
             ShuffleIfNeeded(numCards);
             var drawn = Peek(numCards);
-            _policyDeck.RemoveRange(0, drawn.Count);
+
+            for (var i = 0; i < drawn.Count; i++)
+                _policyDeck.RemoveAt(0);
+
             return drawn;
         }
 
