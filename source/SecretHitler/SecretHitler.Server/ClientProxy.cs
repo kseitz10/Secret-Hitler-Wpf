@@ -39,32 +39,37 @@ namespace SecretHitler.Server
             Clients.All.broadcastMessage(message);
         }
 
-        public Task<bool> ApproveVeto(IPlayerInfo president)
+        public void SelectPlayer(IPlayerInfo chooser, GameState gameState, IEnumerable<IPlayerInfo> candidates)
         {
             throw new NotImplementedException();
         }
 
-        public Task<PolicyType> GetEnactedPolicy(IPlayerInfo chancellor, IEnumerable<PolicyType> drawnPolicies)
+        public void GetVotes(IEnumerable<IPlayerInfo> voters)
         {
             throw new NotImplementedException();
         }
 
-        public Task<IEnumerable<PolicyType>> GetPresidentialPolicies(IPlayerInfo president, IEnumerable<PolicyType> drawnPolicies)
+        public void GetPresidentialPolicies(IPlayerInfo president, IEnumerable<PolicyType> drawnPolicies)
         {
             throw new NotImplementedException();
         }
 
-        public Task<IEnumerable<bool>> GetVotes(IEnumerable<IPlayerInfo> voters)
+        public void GetEnactedPolicy(IPlayerInfo chancellor, IEnumerable<PolicyType> drawnPolicies)
         {
             throw new NotImplementedException();
         }
 
-        public Task PolicyPeek(IPlayerInfo president, IList<PolicyType> deckTopThree)
+        public void PolicyPeek(IPlayerInfo president, IList<PolicyType> deckTopThree)
         {
             throw new NotImplementedException();
         }
 
-        public Task<IPlayerInfo> SelectPlayer(IPlayerInfo chooser, GameState gameState, IEnumerable<IPlayerInfo> candidates)
+        public void Reveal(IPlayerInfo president, PlayerRole role)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void ApproveVeto(IPlayerInfo president)
         {
             throw new NotImplementedException();
         }

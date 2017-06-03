@@ -45,5 +45,11 @@ namespace SecretHitler.Game.Entities
         /// <param name="other">The player whose GUID should be used for comparison.</param>
         /// <returns>True if both players have the same GUID.</returns>
         public bool Equals(IPlayerInfo other) => other != null && other.Identifier.Equals(Identifier);
+
+        /// <summary>
+        /// Implicitly convert a <see cref="Player"/> to its <see cref="Guid"/> representation for convenience.
+        /// </summary>
+        /// <param name="player">The player to convert.</param>
+        public static implicit operator Guid(Player player) => player.Identifier;
     }
 }

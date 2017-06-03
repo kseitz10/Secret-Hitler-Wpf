@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Xml.Serialization;
 using SecretHitler.Game.Enums;
 
 namespace SecretHitler.Game.Entities
@@ -38,6 +40,11 @@ namespace SecretHitler.Game.Entities
         public IList<PolicyType> DiscardPile { get; set; }
 
         /// <summary>
+        /// The policies that have been enacted.
+        /// </summary>
+        public IList<PolicyType> EnactedPolicies { get; set; }
+
+        /// <summary>
         /// The number of enacted liberal policies.
         /// </summary>
         public int EnactedLiberalPolicyCount { get; set; }
@@ -60,6 +67,55 @@ namespace SecretHitler.Game.Entities
         /// <summary>
         /// The policy draw and discard piles.
         /// </summary>
+        [XmlIgnore]
         public PolicyDeck PolicyDeck { get; set; }
+
+        /////// <summary>
+        /////// If the last election was a special election (president wasn't picked from the queue) then
+        /////// this should be true.
+        /////// </summary>
+        ////public bool SpecialSession { get; set; }
+
+        /// <summary>
+        /// Sets the active president.
+        /// </summary>
+        [XmlIgnore]
+        public Player President
+        {
+            get
+            {
+                return Players.FirstOrDefault(_ => _.IsPresident);
+            }
+            set
+            {
+                var current = President;
+                if (current != null)
+                    current.IsPresident = false;
+
+                if (value != null)
+                    value.IsPresident = true;
+            }
+        }
+
+        /// <summary>
+        /// Sets the active chancellor.
+        /// </summary>
+        [XmlIgnore]
+        public Player Chancellor
+        {
+            get
+            {
+                return Players.FirstOrDefault(_ => _.IsChancellor);
+            }
+            set
+            {
+                var current = Chancellor;
+                if (current != null)
+                    current.IsChancellor = false;
+
+                if (value != null)
+                    value.IsChancellor = true;
+            }
+        }
     }
 }

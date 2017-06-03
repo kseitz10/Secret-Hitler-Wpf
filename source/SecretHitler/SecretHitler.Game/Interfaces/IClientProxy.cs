@@ -8,16 +8,18 @@ namespace SecretHitler.Game.Interfaces
     {
         void Broadcast(string message);
 
-        Task<IPlayerInfo> SelectPlayer(IPlayerInfo chooser, GameState gameState, IEnumerable<IPlayerInfo> candidates);
+        void SelectPlayer(IPlayerInfo chooser, GameState gameState, IEnumerable<IPlayerInfo> candidates);
 
-        Task<IEnumerable<bool>> GetVotes(IEnumerable<IPlayerInfo> voters);
+        void GetVotes(IEnumerable<IPlayerInfo> voters);
 
-        Task<IEnumerable<PolicyType>> GetPresidentialPolicies(IPlayerInfo president, IEnumerable<PolicyType> drawnPolicies);
+        void GetPresidentialPolicies(IPlayerInfo president, IEnumerable<PolicyType> drawnPolicies);
 
-        Task<PolicyType> GetEnactedPolicy(IPlayerInfo chancellor, IEnumerable<PolicyType> drawnPolicies);
+        void GetEnactedPolicy(IPlayerInfo chancellor, IEnumerable<PolicyType> drawnPolicies);
 
-        Task PolicyPeek(IPlayerInfo president, IList<PolicyType> deckTopThree);
+        void PolicyPeek(IPlayerInfo president, IList<PolicyType> deckTopThree);
 
-        Task<bool> ApproveVeto(IPlayerInfo president);
+        void Reveal(IPlayerInfo president, PlayerRole role);
+
+        void ApproveVeto(IPlayerInfo president);
     }
 }
