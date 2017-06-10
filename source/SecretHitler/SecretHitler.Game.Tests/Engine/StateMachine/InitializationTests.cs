@@ -1,11 +1,11 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
 using SecretHitler.Game.Engine;
 using SecretHitler.Game.Enums;
-using System.Linq;
-using System;
-using Moq;
 using SecretHitler.Game.Interfaces;
-using System.Collections.Generic;
 
 namespace SecretHitler.Game.Tests.Engine.StateMachine
 {
@@ -13,7 +13,7 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
     public class InitializationTests : GameStateMachineTestFixture
     {
         [TestMethod]
-        public void StateMachineInitializesWithDefaultValuesTest()
+        public void StateMachineInitializesWithDefaultValues()
         {
             Assert.AreEqual(StateMachineState.None, StateMachine.MachineState, nameof(StateMachine.MachineState));
             Assert.AreSame(ClientProxy.Object, StateMachine.ClientProxy, nameof(StateMachine.ClientProxy));
@@ -68,7 +68,7 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
         }
 
         [TestMethod]
-        public void PolicyDeckUsesDtoDrawPileTest()
+        public void PolicyDeckUsesDtoDrawPile()
         {
             var originalValue = GameData.DrawPile.Count;
             const int numToDraw = 2;
@@ -78,7 +78,7 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
         }
 
         [TestMethod]
-        public void PolicyDeckUsesDtoDiscardPileTest()
+        public void PolicyDeckUsesDtoDiscardPile()
         {
             var originalValue = GameData.DrawPile.Count;
             const int numToDraw = 2;
