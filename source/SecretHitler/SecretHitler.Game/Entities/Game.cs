@@ -12,14 +12,6 @@ namespace SecretHitler.Game.Entities
     public class Game
     {
         /// <summary>
-        /// Default constructor.
-        /// </summary>
-        public Game()
-        {
-            PolicyDeck = new PolicyDeck(DrawPile, DiscardPile, true);
-        }
-
-        /// <summary>
         /// All known players.
         /// </summary>
         public List<Player> Players { get; set; } = new List<Player>();
@@ -32,17 +24,17 @@ namespace SecretHitler.Game.Entities
         /// <summary>
         /// List of items currently in the draw pile. Index 0 represents the bottom.
         /// </summary>
-        public IList<PolicyType> DrawPile { get; set; }
+        public IList<PolicyType> DrawPile { get; set; } = new List<PolicyType>();
 
         /// <summary>
         /// List of items currently in the discard pile. Index 0 represents the bottom.
         /// </summary>
-        public IList<PolicyType> DiscardPile { get; set; }
+        public IList<PolicyType> DiscardPile { get; set; } = new List<PolicyType>();
 
         /// <summary>
         /// The policies that have been enacted.
         /// </summary>
-        public IList<PolicyType> EnactedPolicies { get; set; }
+        public IList<PolicyType> EnactedPolicies { get; set; } = new List<PolicyType>();
 
         /// <summary>
         /// The number of enacted liberal policies.
@@ -63,12 +55,6 @@ namespace SecretHitler.Game.Entities
         /// Players ineligible to serve as chancellor due to term limits.
         /// </summary>
         public IList<Guid> IneligibleChancellors { get; set; } = new List<Guid>();
-
-        /// <summary>
-        /// The policy draw and discard piles.
-        /// </summary>
-        [XmlIgnore]
-        public PolicyDeck PolicyDeck { get; set; }
 
         /////// <summary>
         /////// If the last election was a special election (president wasn't picked from the queue) then

@@ -5,7 +5,7 @@ using SecretHitler.Game.Enums;
 using SecretHitler.Game.Interfaces;
 using SecretHitler.Game.Utility;
 
-namespace SecretHitler.Game.Entities
+namespace SecretHitler.Game.Engine
 {
     /// <summary>
     /// Represents a deck of cards with a discard pile.
@@ -16,16 +16,6 @@ namespace SecretHitler.Game.Entities
         public const int TotalFascistPolicies = 11;
         private readonly IList<PolicyType> _policyDeck;
         private readonly IList<PolicyType> _discardDeck;
-
-        /// <summary>
-        /// Constructs a policy deck with internal storage.
-        /// </summary>
-        public PolicyDeck()
-        {
-            _policyDeck = new List<PolicyType>();
-            _discardDeck = new List<PolicyType>();
-            Reset();
-        }
 
         /// <summary>
         /// Constructs a policy deck

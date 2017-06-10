@@ -12,32 +12,58 @@ namespace SecretHitler.Game.Engine
     /// </summary>
     public partial class GameStateMachine : IClientResponseReceiver
     {
+        /// <summary>
+        /// Constructs a new instance of the game state machine.
+        /// </summary>
+        public GameStateMachine(IClientProxy clientProxy, Entities.Game gameData = null)
+        {
+            ClientProxy = clientProxy;
+            GameData = gameData ?? new Entities.Game();
+            PolicyDeck = new PolicyDeck(GameData.DrawPile, GameData.DiscardPile, gameData == null);
+        }
+
         #region Properties
 
         /// <summary>
         /// The data backing the state machine.
         /// </summary>
-        public Entities.Game GameData { get; private set; } = new Entities.Game();
+        public Entities.Game GameData { get; set; }
 
         /// <summary>
         /// Gets the object responsible for sending a message to one or more clients.
         /// </summary>
-        public IClientProxy ClientProxy { get; private set; }
+        public IClientProxy ClientProxy { get; set; }
 
         /// <summary>
         /// The number of fascist roles (not including Hitler) to be assigned given the
         /// current number of players.
         /// </summary>
-        public int FascistCount => GameData.Players.Count - 4 + ((GameData.Players.Count - 5) / 2);
+        public int FascistCount => 1 + ((GameData.Players.Count - 5) / 2);
 
         /// <summary>
         /// The current state of the machine.
         /// </summary>
         public StateMachineState MachineState { get; internal set; } = StateMachineState.None;
 
+        /// <summary>
+        /// The policy draw and discard pile manager.
+        /// </summary>
+        internal ICardDeck<PolicyType> PolicyDeck { get; set; }
+
         #endregion
 
         #region Client Response Methods
+
+        /// <summary>
+        /// Start the game.
+        /// </summary>
+        public void Start()
+        {
+            if (MachineState != StateMachineState.None)
+                throw new GameStateException("Game already in progress.");
+
+            PrepareGame();
+        }
 
         /// <summary>
         /// Indicates a simple acknowledgement from a client.
@@ -134,6 +160,8 @@ namespace SecretHitler.Game.Engine
             {
                 player.Role = PlayerRole.Liberal;
                 player.IsAlive = true;
+                player.IsPresident = false;
+                player.IsChancellor = false;
             }
 
             var liberals = GameData.Players.ToArray();
@@ -153,7 +181,9 @@ namespace SecretHitler.Game.Engine
             GameData.EnactedFascistPolicyCount = 0;
             GameData.EnactedLiberalPolicyCount = 0;
             GameData.ElectionTracker = 0;
-            GameData.PolicyDeck.Reset();
+            PolicyDeck.Reset();
+
+            PresidentialSuccession();
         }
 
         private void PresidentialSuccession(bool failedElection = false, IPlayerInfo specialElectionPresident = null)
@@ -200,7 +230,7 @@ namespace SecretHitler.Game.Engine
             {
                 GameData.ElectionTracker = 0;
                 GameData.IneligibleChancellors.Clear();
-                var drawnPolicy = GameData.PolicyDeck.Draw();
+                var drawnPolicy = PolicyDeck.Draw();
                 Enact(drawnPolicy.Single(), true);
                 
                 // TODO Verify additional work to do here

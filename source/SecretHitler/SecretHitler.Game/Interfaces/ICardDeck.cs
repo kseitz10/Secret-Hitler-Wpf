@@ -8,6 +8,16 @@ namespace SecretHitler.Game.Interfaces
     public interface ICardDeck<TCard>
     {
         /// <summary>
+        /// The number of cards currently in the draw pile.
+        /// </summary>
+        int DrawPileCount { get; }
+
+        /// <summary>
+        /// The number of cards currently in the discard pile.
+        /// </summary>
+        int DiscardPileCount { get; }
+
+        /// <summary>
         /// Reset the deck to its original state, restoring any cards that were consumed.
         /// </summary>
         void Reset();

@@ -50,6 +50,6 @@ namespace SecretHitler.Game.Entities
         /// Implicitly convert a <see cref="Player"/> to its <see cref="Guid"/> representation for convenience.
         /// </summary>
         /// <param name="player">The player to convert.</param>
-        public static implicit operator Guid(Player player) => player.Identifier;
+        public static implicit operator Guid(Player player) => player?.Identifier ?? Guid.Empty;
     }
 }

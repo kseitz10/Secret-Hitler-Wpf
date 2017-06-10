@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SecretHitler.Game.Entities;
+using SecretHitler.Game.Engine;
 using SecretHitler.Game.Enums;
 
-namespace SecretHitler.Game.Tests.Entities
+namespace SecretHitler.Game.Tests.Engine
 {
     [TestClass]
     public class PolicyDeskTests
@@ -14,7 +15,7 @@ namespace SecretHitler.Game.Tests.Entities
         [TestInitialize]
         public void TestInitialize()
         {
-            PolicyDeck = new PolicyDeck();
+            PolicyDeck = new PolicyDeck(new List<PolicyType>(), new List<PolicyType>(), true);
         }
 
         [TestMethod]
