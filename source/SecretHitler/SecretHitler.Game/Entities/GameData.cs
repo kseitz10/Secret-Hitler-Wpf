@@ -9,12 +9,12 @@ namespace SecretHitler.Game.Entities
     /// <summary>
     /// Represents all of the game board state information.
     /// </summary>
-    public class Game
+    public class GameData
     {
         /// <summary>
         /// All known players.
         /// </summary>
-        public List<Player> Players { get; set; } = new List<Player>();
+        public List<PlayerData> Players { get; set; } = new List<PlayerData>();
 
         /// <summary>
         /// Current value of the election tracker.
@@ -66,7 +66,7 @@ namespace SecretHitler.Game.Entities
         /// Sets the active president.
         /// </summary>
         [XmlIgnore]
-        public Player President
+        public PlayerData President
         {
             get
             {
@@ -87,7 +87,7 @@ namespace SecretHitler.Game.Entities
         /// Sets the active chancellor.
         /// </summary>
         [XmlIgnore]
-        public Player Chancellor
+        public PlayerData Chancellor
         {
             get
             {

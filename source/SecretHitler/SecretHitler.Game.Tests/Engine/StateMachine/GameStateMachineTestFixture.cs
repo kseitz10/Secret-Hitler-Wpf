@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using SecretHitler.Game.Engine;
@@ -13,40 +10,39 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
 {
     public abstract class GameStateMachineTestFixture
     {
-        public const int MinPlayerCount = 5;
-        public const int MaxPlayerCount = 10;
-
         public GameStateMachine StateMachine { get; private set; }
 
         public Mock<IClientProxy> ClientProxy { get; private set; }
 
+        public Mock<GameDataManipulator> Manipulator { get; private set; }
+
         public Random Random { get; } = new Random();
 
-        public Game.Entities.Game GameData => StateMachine.GameData; 
+        public GameData Game => StateMachine.GameData;
 
-        public IList<Player> Players => GameData.Players;
-
-        public StateMachineState State => StateMachine.MachineState;
+        public IList<PlayerData> Players => Game.Players;
 
         [TestInitialize]
         public void TestInitialize()
         {
             ClientProxy = new Mock<IClientProxy>();
             StateMachine = new GameStateMachine(ClientProxy.Object);
+            Manipulator = new Mock<GameDataManipulator>(Game) { CallBase = true };
+            StateMachine.GameDataManipulator = Manipulator.Object;
             ResetPlayers();
         }
 
-        protected void ResetPlayers(int playerCt = MinPlayerCount)
+        protected void ResetPlayers(int playerCt = Constants.MinPlayerCount)
         {
             Players.Clear();
             AddPlayers(playerCt);
         }
 
-        protected void AddPlayers(int playerCt = MinPlayerCount)
+        protected void AddPlayers(int playerCt = Constants.MinPlayerCount)
         {
-            for(var i = 0; i < playerCt; i++)
+            for (var i = 0; i < playerCt; i++)
             {
-                var player = new Player()
+                var player = new PlayerData()
                 {
                     Identifier = Guid.NewGuid(),
                 };

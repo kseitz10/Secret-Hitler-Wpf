@@ -4,6 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
+using SecretHitler.Game.Engine;
+using SecretHitler.Game.Enums;
+using SecretHitler.Game.Interfaces;
+using SecretHitler.Game.Utility;
 
 namespace SecretHitler.Game.Tests.Engine.StateMachine
 {
@@ -11,43 +16,7 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
     public class NominationAndElectionTests : GameStateMachineTestFixture
     {
         [TestMethod]
-        public void NoTermLimitsForPresidentsWhenFivePlayersAlive()
-        {
-            Assert.Inconclusive();
-        }
-
-        [TestMethod]
-        public void TermLimitsForPresidentsWhenMoreThanFivePlayersAlive()
-        {
-            Assert.Inconclusive();
-        }
-
-        [TestMethod]
-        public void TermLimitsForChancellor()
-        {
-            Assert.Inconclusive();
-        }
-
-        [TestMethod]
-        public void FailedElectionIncreasesElectionTracker()
-        {
-            Assert.Inconclusive();
-        }
-
-        [TestMethod]
         public void ChaosEnactsPolicyWithoutPresidentialPower()
-        {
-            Assert.Inconclusive();
-        }
-
-        [TestMethod]
-        public void ChaosClearsTermLimits()
-        {
-            Assert.Inconclusive();
-        }
-
-        [TestMethod]
-        public void ChaosResetsElectionTracker()
         {
             Assert.Inconclusive();
         }
@@ -85,17 +54,59 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
         [TestMethod]
         public void SelectingNominationTriggersVotingStage()
         {
-            Assert.Inconclusive();
+            var president = Players.First();
+            var nomination = Players.Skip(1).First();
+            StateMachine.MachineState = StateMachineState.AwaitingNomination;
+            StateMachine.PlayerSelected(nomination);
+            Assert.AreEqual(nomination, Game.Chancellor, "Chancellor should be assigned");
+            Assert.AreEqual(StateMachine.MachineState, StateMachineState.AwaitingVotes);
+            ClientProxy.Verify(_ => _.GetVotes(It.Is<IEnumerable<IPlayerInfo>>(voters => voters.All(v => v.IsAlive))));
         }
 
         [TestMethod]
-        public void MajorityVoteCompletesElection()
+        public void MajorityVoteCompletesElectionAndDeliversPolicies()
+        {
+            const int Pass = 4;
+            const int Fail = 3;
+            ResetPlayers(Pass + Fail);
+
+            var president = Players.First();
+            president.IsPresident = true;
+            StateMachine.MachineState = StateMachineState.AwaitingVotes;
+
+            StateMachine.VotesCollected(Enumerable.Range(0, Pass).Select(_ => true).Concat(Enumerable.Range(0, Fail).Select(_ => false)));
+
+            Assert.AreEqual(StateMachine.MachineState, StateMachineState.AwaitingPresidentialPolicies);
+            ClientProxy.Verify(_ => _.GetPresidentialPolicies(president, It.Is<IEnumerable<PolicyType>>(d => d.Count() == Constants.PresidentialPolicyDrawCount)));
+        }
+
+        [TestMethod]
+        public void NonMajorityVoteFailsElection()
+        {
+            const int Pass = 3;
+            const int Fail = 3;
+            ResetPlayers(Pass + Fail);
+            Manipulator.Object.ResetGame();
+
+            var president = Players.First();
+            president.IsPresident = true;
+            StateMachine.MachineState = StateMachineState.AwaitingVotes;
+
+            StateMachine.VotesCollected(Enumerable.Range(0, Pass).Select(_ => true).Concat(Enumerable.Range(0, Fail).Select(_ => false)));
+
+            Assert.AreEqual(StateMachine.MachineState, StateMachineState.AwaitingNomination);
+            Manipulator.Verify(_ => _.UpdateElectionTracker(null));
+            Manipulator.Verify(_ => _.GetPresidentFromQueue());
+        }
+
+        [TestMethod]
+        public void NonMajorityVoteFailsElectionAndHandlesLiberalPolicyWinCondition()
         {
             Assert.Inconclusive();
         }
 
         [TestMethod]
-        public void NonMajorityVoteFailsElection()
+        public void NonMajorityVoteFailsElectionAndHandlesFascistPolicyWinCondition()
         {
             Assert.Inconclusive();
         }

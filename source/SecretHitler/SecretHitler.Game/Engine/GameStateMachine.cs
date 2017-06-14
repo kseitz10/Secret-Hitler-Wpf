@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using SecretHitler.Game.Entities;
 using SecretHitler.Game.Enums;
 using SecretHitler.Game.Interfaces;
 using SecretHitler.Game.Utility;
@@ -15,10 +16,11 @@ namespace SecretHitler.Game.Engine
         /// <summary>
         /// Constructs a new instance of the game state machine.
         /// </summary>
-        public GameStateMachine(IClientProxy clientProxy, Entities.Game gameData = null)
+        public GameStateMachine(IClientProxy clientProxy, GameData gameData = null)
         {
             ClientProxy = clientProxy;
-            GameData = gameData ?? new Entities.Game();
+            GameData = gameData ?? new GameData();
+            GameDataManipulator = new GameDataManipulator(GameData);
             PolicyDeck = new PolicyDeck(GameData.DrawPile, GameData.DiscardPile, gameData == null);
         }
 
@@ -27,18 +29,12 @@ namespace SecretHitler.Game.Engine
         /// <summary>
         /// The data backing the state machine.
         /// </summary>
-        public Entities.Game GameData { get; set; }
+        public Entities.GameData GameData { get; }
 
         /// <summary>
         /// Gets the object responsible for sending a message to one or more clients.
         /// </summary>
         public IClientProxy ClientProxy { get; set; }
-
-        /// <summary>
-        /// The number of fascist roles (not including Hitler) to be assigned given the
-        /// current number of players.
-        /// </summary>
-        public int FascistCount => 1 + ((GameData.Players.Count - 5) / 2);
 
         /// <summary>
         /// The current state of the machine.
@@ -49,6 +45,11 @@ namespace SecretHitler.Game.Engine
         /// The policy draw and discard pile manager.
         /// </summary>
         internal ICardDeck<PolicyType> PolicyDeck { get; set; }
+
+        /// <summary>
+        /// Utility for managing the game state data.
+        /// </summary>
+        internal GameDataManipulator GameDataManipulator { get; set; }
 
         #endregion
 
@@ -107,14 +108,19 @@ namespace SecretHitler.Game.Engine
             switch (MachineState)
             {
                 case StateMachineState.AwaitingNomination:
-
+                    GameData.Chancellor = CoercePlayer(player);
+                    MachineState = StateMachineState.AwaitingVotes;
+                    ClientProxy.GetVotes(GameData.Players.Where(_ => _.IsAlive));
                     break;
+
                 case StateMachineState.AwaitingSpecialElectionPick:
 
                     break;
+
                 case StateMachineState.AwaitingExecution:
 
                     break;
+
                 default:
                     throw new GameStateException($"{nameof(PlayerSelected)} called for invalid state {MachineState}.");
             }
@@ -126,9 +132,35 @@ namespace SecretHitler.Game.Engine
         /// <param name="policies">The selected policies.</param>
         public void PoliciesSelected(IEnumerable<PolicyType> policies)
         {
+            var myPolicies = policies.ToList();
             switch (MachineState)
             {
                 case StateMachineState.AwaitingEnactedPolicy:
+                    // TODO Validate policy was actually drawn
+                    if (myPolicies.Count != 1)
+                        throw new GameStateException("Too many policies selected for the current game state.");
+
+                    var policy = myPolicies.First();
+                    if (policy == PolicyType.Fascist)
+                    {
+                        GameData.EnactedFascistPolicyCount++;
+                    }
+                    else if (policy == PolicyType.Liberal)
+                    {
+                        GameData.EnactedLiberalPolicyCount++;
+                    }
+
+                    if (policy != PolicyType.None)
+                    {
+                        // TODO Presidential power
+                        // TODO Win condition check? Other stuff?
+
+                        PresidentialSuccession();
+                    }
+                    else
+                    {
+                        // TODO Veto
+                    }
 
                     break;
                 case StateMachineState.AwaitingPresidentialPolicies:
@@ -147,60 +179,44 @@ namespace SecretHitler.Game.Engine
         {
             if (MachineState != StateMachineState.AwaitingVotes)
                 throw new GameStateException($"{nameof(VotesCollected)} called for invalid state {MachineState}.");
-        }
 
+            var pass = votes.Count(_ => _);
+            var fail = votes.Count() - pass;
+
+            if (pass > fail)
+            {
+                MachineState = StateMachineState.AwaitingPresidentialPolicies;
+                ClientProxy.GetPresidentialPolicies(GameData.President, PolicyDeck.Draw(Constants.PresidentialPolicyDrawCount));
+            }
+            else
+            {
+                if (GameDataManipulator.UpdateElectionTracker())
+                {
+                    // TODO Policy win condition check.
+                }
+                else
+                {
+                    PresidentialSuccession(true);
+                }
+            }
+        }
+    
         #endregion
 
         #region Private Methods
 
         private void PrepareGame()
         {
-            // Mark all players as alive and assign them some roles
-            foreach (var player in GameData.Players)
-            {
-                player.Role = PlayerRole.Liberal;
-                player.IsAlive = true;
-                player.IsPresident = false;
-                player.IsChancellor = false;
-            }
-
-            var liberals = GameData.Players.ToArray();
-            liberals.Shuffle();
-
-            foreach (var fascist in liberals.Take(FascistCount))
-                fascist.Role = PlayerRole.Fascist;
-
-            liberals.Skip(FascistCount).First().Role = PlayerRole.Hitler;
-
-            // Set up the presidential queue
-            var shuffled = GameData.Players.Select(_ => _.Identifier).ToList();
-            shuffled.Shuffle();
-            GameData.PresidentialQueue = new Queue<Guid>(shuffled);
-
-            GameData.IneligibleChancellors = new List<Guid>();
-            GameData.EnactedFascistPolicyCount = 0;
-            GameData.EnactedLiberalPolicyCount = 0;
-            GameData.ElectionTracker = 0;
-            PolicyDeck.Reset();
-
+            GameDataManipulator.ResetGame();
             PresidentialSuccession();
         }
 
         private void PresidentialSuccession(bool failedElection = false, IPlayerInfo specialElectionPresident = null)
         {
             if (failedElection)
-            {
-                HandleFailedElection();
-            }
+                GameDataManipulator.UpdateElectionTracker();
             else
-            {
-                GameData.IneligibleChancellors.Clear();
-
-                if (GameData.Players.Count(_ => _.IsAlive) > 5)
-                    GameData.IneligibleChancellors.Add(GameData.President);
-
-                GameData.IneligibleChancellors.Add(GameData.Chancellor);
-            }
+                GameDataManipulator.UpdateTermLimits();
 
             GameData.Chancellor = null;
 
@@ -210,31 +226,12 @@ namespace SecretHitler.Game.Engine
             }
             else
             {
-                var nextPresidentGuid = GameData.PresidentialQueue.Dequeue();
-                GameData.PresidentialQueue.Enqueue(nextPresidentGuid);
-
-                var nextPresident = GameData.Players.First(_ => _.Identifier == nextPresidentGuid);
-                GameData.President = nextPresident;
+                GameDataManipulator.GetPresidentFromQueue();
             }
 
             var candidates = GameData.Players.Where(_ => _.IsAlive && !_.IsPresident && !GameData.IneligibleChancellors.Contains(_.Identifier)).ToArray();
             MachineState = StateMachineState.AwaitingNomination;
             ClientProxy.SelectPlayer(GameData.President, GameState.ChancellorNomination, candidates);
-        }
-
-        private void HandleFailedElection()
-        {
-            GameData.ElectionTracker++;
-
-            if (GameData.ElectionTracker >= 3)
-            {
-                GameData.ElectionTracker = 0;
-                GameData.IneligibleChancellors.Clear();
-                var drawnPolicy = PolicyDeck.Draw();
-                Enact(drawnPolicy.Single(), true);
-                
-                // TODO Verify additional work to do here
-            }
         }
 
         private void Enact(PolicyType policy, bool ignorePower)
@@ -251,6 +248,8 @@ namespace SecretHitler.Game.Engine
             
             // TODO Check win condition?
         }
+
+        private PlayerData CoercePlayer(IPlayerInfo player) => GameData.Players.Single(_ => _.Identifier == player.Identifier);
 
         #endregion
 

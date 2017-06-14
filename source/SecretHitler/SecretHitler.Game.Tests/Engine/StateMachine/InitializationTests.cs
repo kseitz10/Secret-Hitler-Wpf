@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
@@ -20,81 +19,32 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
         }
 
         [TestMethod]
-        public void StartGameResetsPlayerProperties()
+        public void StartGameResetsGameData()
         {
-            for (var i = MinPlayerCount; i <= MaxPlayerCount; i++)
-            {
-                TestInitialize();
-                ResetPlayers(i);
-
-                // Dirty up the players.
-                foreach (var p in Players)
-                {
-                    p.IsAlive = Random.Next(2) == 1;
-                    p.IsChancellor = true;
-                    p.IsPresident = true;
-                    p.Role = PlayerRole.Hitler;
-                }
-
-                StateMachine.Start();
-
-                Assert.IsTrue(Players.All(p => p.IsAlive), "All players should be alive.");
-                Assert.AreEqual(1, Players.Count(p => p.IsPresident), "One player should be presidential candidate.");
-                Assert.AreEqual(0, Players.Count(p => p.IsChancellor), "The chancellor should not be assigned.");
-
-                int expectedFascists;
-                switch (Players.Count)
-                {
-                    case 5:
-                    case 6:
-                        expectedFascists = 1;
-                        break;
-                    case 7:
-                    case 8:
-                        expectedFascists = 2;
-                        break;
-                    case 9:
-                    case 10:
-                        expectedFascists = 3;
-                        break;
-                    default:
-                        throw new Exception("Invalid player count");
-                }
-
-                Assert.AreEqual(expectedFascists, Players.Count(p => p.Role == PlayerRole.Fascist), "Expected number of fascists.");
-                Assert.AreEqual(1, Players.Count(p => p.Role == PlayerRole.Hitler), "One player should be Hitler.");
-                Assert.AreEqual(i - expectedFascists - 1, Players.Count(p => p.Role == PlayerRole.Liberal), "Everyone else should be liberals");
-            }
+            AddPlayers(Constants.MaxPlayerCount);
+            StateMachine.Start();
+            Manipulator.Verify(_ => _.ResetGame());
         }
 
         [TestMethod]
         public void PolicyDeckUsesDtoDrawPile()
         {
-            var originalValue = GameData.DrawPile.Count;
+            var originalValue = Game.DrawPile.Count;
             const int numToDraw = 2;
             StateMachine.PolicyDeck.Draw(numToDraw);
             Assert.AreEqual(originalValue - numToDraw, StateMachine.PolicyDeck.DrawPileCount, "Deck draw pile");
-            Assert.AreEqual(originalValue - numToDraw, GameData.DrawPile.Count, "DTO draw pile");
+            Assert.AreEqual(originalValue - numToDraw, Game.DrawPile.Count, "DTO draw pile");
         }
 
         [TestMethod]
         public void PolicyDeckUsesDtoDiscardPile()
         {
-            var originalValue = GameData.DrawPile.Count;
+            var originalValue = Game.DrawPile.Count;
             const int numToDraw = 2;
             var drawn = StateMachine.PolicyDeck.Draw(numToDraw);
             StateMachine.PolicyDeck.Discard(drawn);
             Assert.AreEqual(numToDraw, StateMachine.PolicyDeck.DiscardPileCount, "Deck discard pile");
-            Assert.AreEqual(numToDraw, GameData.DiscardPile.Count, "DTO discard pile");
-        }
-
-        [TestMethod]
-        public void StartGameResetsPolicyDecks()
-        {
-            var deckMock = new Mock<ICardDeck<PolicyType>>();
-            StateMachine.PolicyDeck = deckMock.Object;
-            StateMachine.Start();
-            deckMock.Verify(_ => _.Reset(), "Deck was not reset.");
+            Assert.AreEqual(numToDraw, Game.DiscardPile.Count, "DTO discard pile");
         }
 
         [TestMethod]
@@ -102,10 +52,12 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
         {
             StateMachine.Start();
             Assert.AreEqual(StateMachineState.AwaitingNomination, StateMachine.MachineState, "Machine state");
+            Assert.AreEqual(1, Players.Count(p => p.IsPresident), "One player should be presidential candidate.");
+            Assert.AreEqual(0, Players.Count(p => p.IsChancellor), "The chancellor should not be assigned.");
             ClientProxy.Verify(_ => _.SelectPlayer(
-                GameData.President,
+                Game.President,
                 GameState.ChancellorNomination,
-                It.IsAny<IEnumerable<IPlayerInfo>>()));
+                It.Is<IEnumerable<IPlayerInfo>>(candidates => candidates.All(c => c.IsAlive && !c.IsPresident))));
         }
     }
 }

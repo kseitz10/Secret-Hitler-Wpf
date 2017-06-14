@@ -12,8 +12,6 @@ namespace SecretHitler.Game.Engine
     /// </summary>
     public class PolicyDeck : ICardDeck<PolicyType>
     {
-        public const int TotalLiberalPolicies = 6;
-        public const int TotalFascistPolicies = 11;
         private readonly IList<PolicyType> _policyDeck;
         private readonly IList<PolicyType> _discardDeck;
 
@@ -53,8 +51,8 @@ namespace SecretHitler.Game.Engine
         /// </summary>
         public void Reset()
         {
-            var _fascistCards = Enumerable.Range(1, TotalFascistPolicies).Select(_ => PolicyType.Fascist);
-            var _liberalCards = Enumerable.Range(1, TotalLiberalPolicies).Select(_ => PolicyType.Liberal);
+            var _fascistCards = Enumerable.Range(1, Constants.TotalFascistPolicies).Select(_ => PolicyType.Fascist);
+            var _liberalCards = Enumerable.Range(1, Constants.TotalLiberalPolicies).Select(_ => PolicyType.Liberal);
             _policyDeck.Clear();
             _policyDeck.AddRange(_fascistCards.Concat(_liberalCards));
             _policyDeck.Shuffle();

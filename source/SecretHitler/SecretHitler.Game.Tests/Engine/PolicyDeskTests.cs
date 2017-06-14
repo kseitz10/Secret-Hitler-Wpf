@@ -22,20 +22,20 @@ namespace SecretHitler.Game.Tests.Engine
         public void PolicyDeckContainsCorrectNumberOfLiberalCardsTest()
         {
             var entireDeck = PolicyDeck.Peek(Int32.MaxValue);
-            Assert.AreEqual(PolicyDeck.TotalLiberalPolicies, entireDeck.Count(_ => _ == PolicyType.Liberal));
+            Assert.AreEqual(Constants.TotalLiberalPolicies, entireDeck.Count(_ => _ == PolicyType.Liberal));
         }
 
         [TestMethod]
         public void PolicyDeckContainsCorrectNumberOfFascistCardsTest()
         {
             var entireDeck = PolicyDeck.Peek(Int32.MaxValue);
-            Assert.AreEqual(PolicyDeck.TotalFascistPolicies, entireDeck.Count(_ => _ == PolicyType.Fascist));
+            Assert.AreEqual(Constants.TotalFascistPolicies, entireDeck.Count(_ => _ == PolicyType.Fascist));
         }
 
         [TestMethod]
         public void NumberOfCardsInPileIsCorrectTest()
         {
-            var totalExpected = PolicyDeck.TotalFascistPolicies + PolicyDeck.TotalLiberalPolicies;
+            var totalExpected = Constants.TotalFascistPolicies + Constants.TotalLiberalPolicies;
             Assert.AreEqual(totalExpected, PolicyDeck.DrawPileCount, "Draw pile should be full.");
             Assert.AreEqual(0, PolicyDeck.DiscardPileCount, "Discard pile should be empty.");
 
@@ -95,7 +95,7 @@ namespace SecretHitler.Game.Tests.Engine
         [TestMethod]
         public void PolicyDeckDrawPileIsRefilledWhenInsufficientTest()
         {
-            var totalDeckSize = PolicyDeck.TotalFascistPolicies + PolicyDeck.TotalLiberalPolicies;
+            var totalDeckSize = Constants.TotalFascistPolicies + Constants.TotalLiberalPolicies;
             PolicyDeck.Discard(PolicyDeck.Draw(PolicyDeck.DrawPileCount - 2));
             Assert.AreEqual(2, PolicyDeck.DrawPileCount, "Deck should have 2 cards left after drawing all but 2 cards.");
             Assert.AreEqual(totalDeckSize - 2, PolicyDeck.DiscardPileCount, "Should have discarded all drawn cards.");
@@ -106,7 +106,7 @@ namespace SecretHitler.Game.Tests.Engine
         [TestMethod]
         public void PolicyDeckDrawPileIsNotRefilledWhenSufficientTest()
         {
-            var totalDeckSize = PolicyDeck.TotalFascistPolicies + PolicyDeck.TotalLiberalPolicies;
+            var totalDeckSize = Constants.TotalFascistPolicies + Constants.TotalLiberalPolicies;
             PolicyDeck.Discard(PolicyDeck.Draw(PolicyDeck.DrawPileCount - 3));
             Assert.AreEqual(3, PolicyDeck.DrawPileCount, "Deck should have 3 cards left after drawing all but 3 cards.");
             Assert.AreEqual(totalDeckSize - 3, PolicyDeck.DiscardPileCount, "Should have discarded all drawn cards.");

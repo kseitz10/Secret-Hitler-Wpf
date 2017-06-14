@@ -53,7 +53,7 @@ namespace SecretHitler.Server
             }
             else
             {
-                Players[identifier] = new Player() { Name = nickname };
+                Players[identifier] = new PlayerData() { Name = nickname };
                 BroadcastMessageImpl($"Client {nickname} connected.");
             }
 

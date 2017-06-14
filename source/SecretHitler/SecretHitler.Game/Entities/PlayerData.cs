@@ -7,7 +7,7 @@ namespace SecretHitler.Game.Entities
     /// <summary>
     /// A player in the game.
     /// </summary>
-    public class Player : IPlayerInfo
+    public class PlayerData : IPlayerInfo
     {
         /// <summary>
         /// GUID for the player.
@@ -47,9 +47,9 @@ namespace SecretHitler.Game.Entities
         public bool Equals(IPlayerInfo other) => other != null && other.Identifier.Equals(Identifier);
 
         /// <summary>
-        /// Implicitly convert a <see cref="Player"/> to its <see cref="Guid"/> representation for convenience.
+        /// Implicitly convert a <see cref="PlayerData"/> to its <see cref="Guid"/> representation for convenience.
         /// </summary>
         /// <param name="player">The player to convert.</param>
-        public static implicit operator Guid(Player player) => player?.Identifier ?? Guid.Empty;
+        public static implicit operator Guid(PlayerData player) => player?.Identifier ?? Guid.Empty;
     }
 }

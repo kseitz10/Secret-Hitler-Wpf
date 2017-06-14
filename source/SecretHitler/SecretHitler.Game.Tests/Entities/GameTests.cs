@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using SecretHitler.Game.Entities;
 
 namespace SecretHitler.Game.Tests.Entities
 {
@@ -8,7 +9,7 @@ namespace SecretHitler.Game.Tests.Entities
         [TestMethod]
         public void CollectionsInitializedTest()
         {
-            var game = new Game.Entities.Game();
+            var game = new GameData();
             Assert.IsNotNull(game.EnactedPolicies, nameof(game.EnactedPolicies));
             Assert.AreEqual(0, game.EnactedPolicies.Count, nameof(game.EnactedPolicies));
             Assert.IsNotNull(game.IneligibleChancellors, nameof(game.IneligibleChancellors));
@@ -26,7 +27,7 @@ namespace SecretHitler.Game.Tests.Entities
         [TestMethod]
         public void DefaultValuesTest()
         {
-            var game = new Game.Entities.Game();
+            var game = new GameData();
             Assert.AreEqual(0, game.ElectionTracker, nameof(game.ElectionTracker));
             Assert.AreEqual(0, game.EnactedFascistPolicyCount, nameof(game.EnactedFascistPolicyCount));
             Assert.AreEqual(0, game.EnactedLiberalPolicyCount, nameof(game.EnactedLiberalPolicyCount));
