@@ -29,22 +29,22 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
         [TestMethod]
         public void PolicyDeckUsesDtoDrawPile()
         {
-            var originalValue = Game.DrawPile.Count;
+            var originalValue = GameData.DrawPile.Count;
             const int numToDraw = 2;
             StateMachine.PolicyDeck.Draw(numToDraw);
             Assert.AreEqual(originalValue - numToDraw, StateMachine.PolicyDeck.DrawPileCount, "Deck draw pile");
-            Assert.AreEqual(originalValue - numToDraw, Game.DrawPile.Count, "DTO draw pile");
+            Assert.AreEqual(originalValue - numToDraw, GameData.DrawPile.Count, "DTO draw pile");
         }
 
         [TestMethod]
         public void PolicyDeckUsesDtoDiscardPile()
         {
-            var originalValue = Game.DrawPile.Count;
+            var originalValue = GameData.DrawPile.Count;
             const int numToDraw = 2;
             var drawn = StateMachine.PolicyDeck.Draw(numToDraw);
             StateMachine.PolicyDeck.Discard(drawn);
             Assert.AreEqual(numToDraw, StateMachine.PolicyDeck.DiscardPileCount, "Deck discard pile");
-            Assert.AreEqual(numToDraw, Game.DiscardPile.Count, "DTO discard pile");
+            Assert.AreEqual(numToDraw, GameData.DiscardPile.Count, "DTO discard pile");
         }
 
         [TestMethod]
@@ -55,7 +55,7 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
             Assert.AreEqual(1, Players.Count(p => p.IsPresident), "One player should be presidential candidate.");
             Assert.AreEqual(0, Players.Count(p => p.IsChancellor), "The chancellor should not be assigned.");
             ClientProxy.Verify(_ => _.SelectPlayer(
-                Game.President,
+                GameData.President,
                 GameState.ChancellorNomination,
                 It.Is<IEnumerable<IPlayerInfo>>(candidates => candidates.All(c => c.IsAlive && !c.IsPresident))));
         }

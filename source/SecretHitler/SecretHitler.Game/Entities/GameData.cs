@@ -32,11 +32,6 @@ namespace SecretHitler.Game.Entities
         public IList<PolicyType> DiscardPile { get; set; } = new List<PolicyType>();
 
         /// <summary>
-        /// The policies that have been enacted.
-        /// </summary>
-        public IList<PolicyType> EnactedPolicies { get; set; } = new List<PolicyType>();
-
-        /// <summary>
         /// The number of enacted liberal policies.
         /// </summary>
         public int EnactedLiberalPolicyCount { get; set; }

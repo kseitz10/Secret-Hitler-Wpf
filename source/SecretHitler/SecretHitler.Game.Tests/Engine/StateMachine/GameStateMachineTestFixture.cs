@@ -18,16 +18,16 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
 
         public Random Random { get; } = new Random();
 
-        public GameData Game => StateMachine.GameData;
+        public GameData GameData => StateMachine.GameData;
 
-        public IList<PlayerData> Players => Game.Players;
+        public IList<PlayerData> Players => GameData.Players;
 
         [TestInitialize]
         public void TestInitialize()
         {
             ClientProxy = new Mock<IClientProxy>();
             StateMachine = new GameStateMachine(ClientProxy.Object);
-            Manipulator = new Mock<GameDataManipulator>(Game) { CallBase = true };
+            Manipulator = new Mock<GameDataManipulator>(GameData) { CallBase = true };
             StateMachine.GameDataManipulator = Manipulator.Object;
             ResetPlayers();
         }

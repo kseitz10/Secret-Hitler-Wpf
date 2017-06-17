@@ -114,7 +114,7 @@ namespace SecretHitler.Game.Engine
                     break;
 
                 case StateMachineState.AwaitingSpecialElectionPick:
-
+                    PresidentialSuccession(false, player);
                     break;
 
                 case StateMachineState.AwaitingExecution:
@@ -232,21 +232,6 @@ namespace SecretHitler.Game.Engine
             var candidates = GameData.Players.Where(_ => _.IsAlive && !_.IsPresident && !GameData.IneligibleChancellors.Contains(_.Identifier)).ToArray();
             MachineState = StateMachineState.AwaitingNomination;
             ClientProxy.SelectPlayer(GameData.President, GameState.ChancellorNomination, candidates);
-        }
-
-        private void Enact(PolicyType policy, bool ignorePower)
-        {
-            if (policy == PolicyType.None)
-                throw new ArgumentException("Cannot use none.", nameof(policy));
-
-            GameData.EnactedPolicies.Add(policy);
-
-            if (!ignorePower)
-            {
-                // TODO Use power.
-            }
-            
-            // TODO Check win condition?
         }
 
         private PlayerData CoercePlayer(IPlayerInfo player) => GameData.Players.Single(_ => _.Identifier == player.Identifier);
