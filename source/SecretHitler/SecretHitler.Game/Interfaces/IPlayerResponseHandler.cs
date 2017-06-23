@@ -6,7 +6,7 @@ namespace SecretHitler.Game.Interfaces
     /// <summary>
     /// Interface for an object the handles responses coming from clients.
     /// </summary>
-    public interface IClientResponseReceiver
+    public interface IPlayerResponseHandler
     {
         /// <summary>
         /// Indicates that a player has been selected by the client that was last issued a request.

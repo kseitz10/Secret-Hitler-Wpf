@@ -6,7 +6,7 @@ namespace SecretHitler.Game.Interfaces
     /// <summary>
     /// A player in the game.
     /// </summary>
-    public interface IPlayerInfo : IEquatable<IPlayerInfo>
+    public interface IPlayerInfo
     {
         /// <summary>
         /// GUID for the player.

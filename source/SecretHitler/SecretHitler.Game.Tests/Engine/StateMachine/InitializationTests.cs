@@ -5,6 +5,8 @@ using Moq;
 using SecretHitler.Game.Engine;
 using SecretHitler.Game.Enums;
 using SecretHitler.Game.Interfaces;
+using System;
+using SecretHitler.Game.Utility;
 
 namespace SecretHitler.Game.Tests.Engine.StateMachine
 {
@@ -15,7 +17,7 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
         public void StateMachineInitializesWithDefaultValues()
         {
             Assert.AreEqual(StateMachineState.None, StateMachine.MachineState, nameof(StateMachine.MachineState));
-            Assert.AreSame(ClientProxy.Object, StateMachine.ClientProxy, nameof(StateMachine.ClientProxy));
+            Assert.AreSame(Director.Object, StateMachine.Director, nameof(StateMachine.Director));
         }
 
         [TestMethod]
@@ -54,10 +56,10 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
             Assert.AreEqual(StateMachineState.AwaitingNomination, StateMachine.MachineState, "Machine state");
             Assert.AreEqual(1, Players.Count(p => p.IsPresident), "One player should be presidential candidate.");
             Assert.AreEqual(0, Players.Count(p => p.IsChancellor), "The chancellor should not be assigned.");
-            ClientProxy.Verify(_ => _.SelectPlayer(
+            Director.Verify(_ => _.SelectPlayer(
                 GameData.President,
                 GameState.ChancellorNomination,
-                It.Is<IEnumerable<IPlayerInfo>>(candidates => candidates.All(c => c.IsAlive && !c.IsPresident))));
+                It.Is<IEnumerable<Guid>>(candidates => candidates.AsPlayers(Players).All(c => c.IsAlive && !c.IsPresident))));
         }
     }
 }

@@ -63,10 +63,11 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
 
             // TODO this whole test is kind of gross.
             var success = false;
-            ClientProxy
-                .Setup(_ => _.SelectPlayer(It.IsAny<IPlayerInfo>(), GameState.ChancellorNomination, It.IsAny<IEnumerable<IPlayerInfo>>()))
-                .Callback(new Action<IPlayerInfo, GameState, IEnumerable<IPlayerInfo>>((pres, state, candidates) =>
+            Director
+                .Setup(_ => _.SelectPlayer(It.IsAny<Guid>(), GameState.ChancellorNomination, It.IsAny<IEnumerable<Guid>>()))
+                .Callback(new Action<Guid, GameState, IEnumerable<Guid>>((pres, state, guids) =>
             {
+                var candidates = guids.AsPlayers(Players);
                 success = true;
                 expected.Remove(GameData.President);
 
@@ -76,7 +77,7 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
                 if (candidates.Any(_ => !_.IsAlive))
                     Assert.Fail("Should not contain dead players.");
 
-                if (candidates.Any(_ => GameData.IneligibleChancellors.Any(__ => __.Equals(_))))
+                if (candidates.Any(c => GameData.IneligibleChancellors.Any(ic => ic.Equals(c))))
                     Assert.Fail("Should not contain ineligible players (term limits)");
 
                 // This assertion would be sufficient on its own, but the checks above provide better test results in event of failure.
@@ -101,7 +102,7 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
             StateMachine.PlayerSelected(nomination);
             Assert.AreEqual(nomination, GameData.Chancellor, "Chancellor should be assigned");
             Assert.AreEqual(StateMachine.MachineState, StateMachineState.AwaitingVotes);
-            ClientProxy.Verify(prox => prox.GetVotes(It.Is<IEnumerable<IPlayerInfo>>(voters => voters.Count() == Players.Count(_ => _.IsAlive) && voters.All(v => v.IsAlive))));
+            Director.Verify(prox => prox.GetVotes(It.Is<IEnumerable<Guid>>(voters => voters.Count() == Players.Count(_ => _.IsAlive) && voters.AsPlayers(Players).All(v => v.IsAlive))));
         }
 
         [TestMethod]
@@ -120,7 +121,7 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
 
             Assert.AreEqual(StateMachine.MachineState, StateMachineState.AwaitingPresidentialPolicies);
             Assert.AreEqual(1, GameData.ElectionTracker, "Election tracker should not reset until policy is passed.");
-            ClientProxy.Verify(_ => _.GetPresidentialPolicies(president, It.Is<IEnumerable<PolicyType>>(d => d.Count() == Constants.PresidentialPolicyDrawCount)));
+            Director.Verify(_ => _.GetPresidentialPolicies(president, It.Is<IEnumerable<PolicyType>>(d => d.Count() == Constants.PresidentialPolicyDrawCount)));
         }
 
         [TestMethod]

@@ -136,6 +136,7 @@ namespace SecretHitler.App.ViewModels
             if (await client.ConnectAsync())
             {
                 var gameVm = new GameSurfaceViewModel(client);
+                client.ClientUI = gameVm;
                 ShellViewModel.Instance.UpdateMainRegion(gameVm);
             }
         }

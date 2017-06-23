@@ -11,14 +11,14 @@ namespace SecretHitler.Game.Engine
     /// <summary>
     /// State machine for the Secret Hitler game.
     /// </summary>
-    public partial class GameStateMachine : IClientResponseReceiver
+    public partial class GameStateMachine : IPlayerResponseHandler
     {
         /// <summary>
         /// Constructs a new instance of the game state machine.
         /// </summary>
-        public GameStateMachine(IClientProxy clientProxy, GameData gameData = null)
+        public GameStateMachine(IPlayerDirector director, GameData gameData = null)
         {
-            ClientProxy = clientProxy;
+            Director = director;
             GameData = gameData ?? new GameData();
             GameDataManipulator = new GameDataManipulator(GameData);
             PolicyDeck = new PolicyDeck(GameData.DrawPile, GameData.DiscardPile, gameData == null);
@@ -34,12 +34,17 @@ namespace SecretHitler.Game.Engine
         /// <summary>
         /// Gets the object responsible for sending a message to one or more clients.
         /// </summary>
-        public IClientProxy ClientProxy { get; set; }
+        public IPlayerDirector Director { get; set; }
 
         /// <summary>
         /// The current state of the machine.
         /// </summary>
         public StateMachineState MachineState { get; internal set; } = StateMachineState.None;
+
+        /// <summary>
+        /// Whether game is in progress.
+        /// </summary>
+        public bool GameInProgress => MachineState != StateMachineState.None;
 
         /// <summary>
         /// The policy draw and discard pile manager.
@@ -110,7 +115,7 @@ namespace SecretHitler.Game.Engine
                 case StateMachineState.AwaitingNomination:
                     GameData.Chancellor = CoercePlayer(player);
                     MachineState = StateMachineState.AwaitingVotes;
-                    ClientProxy.GetVotes(GameData.Players.Where(_ => _.IsAlive));
+                    Director.GetVotes(GameData.Players.Where(_ => _.IsAlive).AsGuids());
                     break;
 
                 case StateMachineState.AwaitingSpecialElectionPick:
@@ -186,7 +191,7 @@ namespace SecretHitler.Game.Engine
             if (pass > fail)
             {
                 MachineState = StateMachineState.AwaitingPresidentialPolicies;
-                ClientProxy.GetPresidentialPolicies(GameData.President, PolicyDeck.Draw(Constants.PresidentialPolicyDrawCount));
+                Director.GetPresidentialPolicies(GameData.President, PolicyDeck.Draw(Constants.PresidentialPolicyDrawCount));
             }
             else
             {
@@ -231,7 +236,10 @@ namespace SecretHitler.Game.Engine
 
             var candidates = GameData.Players.Where(_ => _.IsAlive && !_.IsPresident && !GameData.IneligibleChancellors.Contains(_.Identifier)).ToArray();
             MachineState = StateMachineState.AwaitingNomination;
-            ClientProxy.SelectPlayer(GameData.President, GameState.ChancellorNomination, candidates);
+
+            Director.UpdatePlayerStates(GameData.Players);
+            Director.Broadcast($"{GameData.President.Name} is now president and will nominate a chancellor.");
+            Director.SelectPlayer(GameData.President, GameState.ChancellorNomination, candidates.AsGuids());
         }
 
         private PlayerData CoercePlayer(IPlayerInfo player) => GameData.Players.Single(_ => _.Identifier == player.Identifier);

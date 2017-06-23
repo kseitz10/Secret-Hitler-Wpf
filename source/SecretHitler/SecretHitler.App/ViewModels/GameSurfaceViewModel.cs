@@ -1,57 +1,49 @@
-﻿using System.Collections.ObjectModel;
-using GalaSoft.MvvmLight;
-using SecretHitler.Game.Interfaces;
-using SecretHitler.App.Interfaces;
+﻿using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.CommandWpf;
+using SecretHitler.App.Interfaces;
 using System;
+using System.Collections.Generic;
+using SecretHitler.Game.Enums;
+using SecretHitler.Game.Interfaces;
+using System.Threading.Tasks;
 
 namespace SecretHitler.App.ViewModels
 {
     /// <summary>
     /// Viewmodel for playing the game.
     /// </summary>
-    public class GameSurfaceViewModel : ViewModelBase
+    public class GameSurfaceViewModel : ViewModelBase, IPlayerLogic
     {
         /// <summary>
         /// Constructor for the game surface viewmodel.
         /// </summary>
-        /// <param name="client">Client class used to coordinate with the server.</param>
+        /// <param name="client">SignalR class used to coordinate with the server.</param>
         public GameSurfaceViewModel(IClient client)
         {
             Client = client;
         }
 
-        private IClient _client;
-        private ObservableCollection<IPlayerInfo> _players = new ObservableCollection<IPlayerInfo>();
+        private List<IPlayerInfo> _players = new List<IPlayerInfo>();
         private string _messages = string.Empty;
         private string _messageToSend = string.Empty;
         private RelayCommand _sendMessageCommand;
 
         #region Properties
 
-        private IClient Client
-        {
-            get => _client;
-            set
-            {
-                if (_client != null)
-                {
-                    _client.MessageReceived -= OnMessageReceived;
-                }
-
-                _client = value;
-
-                if (_client != null)
-                {
-                    _client.MessageReceived += OnMessageReceived;
-                }
-            }
-        }
+        private IClient Client { get; set; }
 
         /// <summary>
         /// The players in the lobby/game.
         /// </summary>
-        public ObservableCollection<IPlayerInfo> Players => _players;
+        public List<IPlayerInfo> Players
+        {
+            get { return _players; }
+            private set
+            {
+                _players = value;
+                RaisePropertyChanged();
+            }
+        }
 
         /// <summary>
         /// Gets the messages that have been received.
@@ -59,7 +51,7 @@ namespace SecretHitler.App.ViewModels
         public string Messages
         {
             get => _messages;
-            set
+            private set
             {
                 _messages = value;
                 RaisePropertyChanged();
@@ -94,9 +86,49 @@ namespace SecretHitler.App.ViewModels
 
         #region Event Handlers
 
-        private void OnMessageReceived(string message)
+        public void UpdatePlayerStates(IEnumerable<IPlayerInfo> playerData)
+        {
+            Players = new List<IPlayerInfo>(playerData);
+        }
+
+        public void UpdateLoyalty(PlayerRole role)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void MessageReceived(string message)
         {
             Messages = string.Concat(Messages, Environment.NewLine, message);
+        }
+
+        public Task<Guid> SelectPlayer(GameState gameState, IEnumerable<Guid> candidates)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> GetVote()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IList<PolicyType>> SelectPolicies(IList<PolicyType> drawnPolicies, int allowedCount)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void ShowPolicies(IList<PolicyType> deckTopThree)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void RevealLoyalty(PlayerRole role)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> PromptForVetoApproval()
+        {
+            throw new NotImplementedException();
         }
 
         #endregion

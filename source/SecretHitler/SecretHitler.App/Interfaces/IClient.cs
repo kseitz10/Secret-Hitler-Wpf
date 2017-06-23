@@ -1,8 +1,11 @@
-﻿using System.Threading.Tasks;
-using static SecretHitler.App.Utility.Client;
+﻿using SecretHitler.Game.Interfaces;
+using System.Threading.Tasks;
 
 namespace SecretHitler.App.Interfaces
 {
+    /// <summary>
+    /// Represents a SignalR class used to initiate coordination with the server.
+    /// </summary>
     public interface IClient
     {
         /// <summary>
@@ -16,14 +19,14 @@ namespace SecretHitler.App.Interfaces
         void Disconnect();
 
         /// <summary>
+        /// The object that is delivered information and requests by the server.
+        /// </summary>
+        IPlayerLogic ClientUI { get; set; }
+
+        /// <summary>
         /// Send a message to other clients.
         /// </summary>
         /// <param name="message">Message text.</param>
         void SendMessage(string message);
-
-        /// <summary>
-        /// Event raised when a broadcast message was received.
-        /// </summary>
-        event MessageReceivedDelegate MessageReceived;
     }
 }

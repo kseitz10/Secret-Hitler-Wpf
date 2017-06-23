@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNet.SignalR;
 using SecretHitler.Game.Entities;
-using SecretHitler.Game.Interfaces;
+using SecretHitler.Game.Engine;
 
 namespace SecretHitler.Server
 {
@@ -12,7 +12,9 @@ namespace SecretHitler.Server
     {
         #region Persistent Data
 
-        public static Dictionary<string, IPlayerInfo> Players = new Dictionary<string, IPlayerInfo>();
+        public static Dictionary<string, PlayerData> Players { get; private set; } = new Dictionary<string, PlayerData>();
+
+        public static GameStateMachine StateMachine { get; private set; } = new GameStateMachine(Director.Instance);
 
         #endregion
 
@@ -29,7 +31,7 @@ namespace SecretHitler.Server
         {
             // TODO Broadcast predefined server messages with enum instead of as string to support localization, if we care.
             Console.WriteLine(message);
-            Clients.All.broadcastMessage(message);
+            Clients.All.BroadcastMessage(message);
         }
 
         #endregion
@@ -48,22 +50,27 @@ namespace SecretHitler.Server
             {
                 Players.Remove(existingPlayer.Key);
                 Players[identifier] = existingPlayer.Value;
-
                 BroadcastMessageImpl($"Client {nickname} has rejoined.");
             }
             else
             {
                 Players[identifier] = new PlayerData() { Name = nickname };
+                StateMachine.GameData.Players.Add(Players[identifier]);
                 BroadcastMessageImpl($"Client {nickname} connected.");
             }
 
+            Clients.All.UpdatePlayerStates(Players.Select(_ => _.Value).ToList());
             return base.OnConnected();
         }
 
         public override Task OnDisconnected(bool stopCalled)
         {
+            // TODO Handle all the problems caused by disconnecting players.
             var player = Players[Context.ConnectionId];
+            player.IsAlive = false;
             BroadcastMessageImpl($"Client {player.Name} disconnected.");
+
+            Clients.All.UpdatePlayerStates(Players.Select(_ => _.Value).ToList());
             return base.OnDisconnected(stopCalled);
         }
 
@@ -74,5 +81,4 @@ namespace SecretHitler.Server
 
         #endregion
     }
-
 }

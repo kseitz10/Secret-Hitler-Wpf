@@ -43,5 +43,46 @@ namespace SecretHitler.Game.Utility
             foreach (var i in itemsToAdd)
                 list.Add(i);
         }
+
+        /// <summary>
+        /// Shorthand way to get a player's GUID.
+        /// </summary>
+        /// <param name="player">Player</param>
+        /// <returns>Guid</returns>
+        public static Guid AsGuid(this IPlayerInfo player)
+        {
+            return player?.Identifier ?? Guid.Empty;
+        }
+
+        /// <summary>
+        /// Shorthand way to get players' GUID.
+        /// </summary>
+        /// <param name="players">Players</param>
+        /// <returns>Guids</returns>
+        public static IEnumerable<Guid> AsGuids(this IEnumerable<IPlayerInfo> players)
+        {
+            return players?.Select(AsGuid);
+        }
+
+        /// <summary>
+        /// Shorthand way to get player objects from a collection of GUIDs.
+        /// </summary>
+        /// <param name="guids">Guids</param>
+        /// <returns>Players</returns>
+        public static IList<TPlayer> AsPlayers<TPlayer>(this IEnumerable<Guid> guids, IEnumerable<TPlayer> players) where TPlayer : IPlayerInfo
+        {
+            return guids.Join(players, g => g, p => p.Identifier, (g, p) => p).ToList();
+        }
+
+        /// <summary>
+        /// Shorthand way to see if players have the same GUID.
+        /// </summary>
+        /// <param name="player">First player</param>
+        /// <param name="other">Second player</param>
+        /// <returns>True if same identifier.</returns>
+        public static bool HasSameIdentifierAs(this IPlayerInfo player, IPlayerInfo other)
+        {
+            return player != null && other != null && player.Identifier == other.Identifier;
+        }
     }
 }

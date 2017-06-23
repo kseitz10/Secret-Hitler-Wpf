@@ -1,9 +1,11 @@
-﻿using System;
+﻿using Microsoft.AspNet.SignalR.Client;
+using SecretHitler.App.Interfaces;
+using SecretHitler.Game.Entities;
+using SecretHitler.Game.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Microsoft.AspNet.SignalR.Client;
-using SecretHitler.App.Interfaces;
 
 namespace SecretHitler.App.Utility
 {
@@ -32,6 +34,11 @@ namespace SecretHitler.App.Utility
         }
 
         /// <summary>
+        /// The object that is delivered information and requests by the server.
+        /// </summary>
+        public IPlayerLogic ClientUI { get; set; }
+
+        /// <summary>
         /// Creates and connects the hub connection and hub proxy.
         /// </summary>
         public async Task<bool> ConnectAsync()
@@ -46,7 +53,8 @@ namespace SecretHitler.App.Utility
             //// _connection.Closed += Connection_Closed;
 
             _hubProxy = _connection.CreateHubProxy("ServerHub");
-            _hubProxy.On<string>("broadcastMessage", _ => MessageReceived?.Invoke(_));
+            _hubProxy.On<string>("BroadcastMessage", _ => ClientUI?.MessageReceived(_));
+            _hubProxy.On<IEnumerable<PlayerData>>("UpdatePlayerStates", _ => ClientUI?.UpdatePlayerStates(_));
 
             try
             {
@@ -79,8 +87,5 @@ namespace SecretHitler.App.Utility
         {
             _hubProxy.Invoke("broadcastMessage", message);
         }
-
-        public delegate void MessageReceivedDelegate(string message);
-        public event MessageReceivedDelegate MessageReceived;
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using SecretHitler.Game.Enums;
 using SecretHitler.Game.Interfaces;
+using SecretHitler.Game.Utility;
 
 namespace SecretHitler.Game.Entities
 {
@@ -40,16 +41,9 @@ namespace SecretHitler.Game.Entities
         public PlayerRole? Role { get; set; }
 
         /// <summary>
-        /// Players are considered equal if their GUID matches.
-        /// </summary>
-        /// <param name="other">The player whose GUID should be used for comparison.</param>
-        /// <returns>True if both players have the same GUID.</returns>
-        public bool Equals(IPlayerInfo other) => other != null && other.Identifier.Equals(Identifier);
-
-        /// <summary>
         /// Implicitly convert a <see cref="PlayerData"/> to its <see cref="Guid"/> representation for convenience.
         /// </summary>
         /// <param name="player">The player to convert.</param>
-        public static implicit operator Guid(PlayerData player) => player?.Identifier ?? Guid.Empty;
+        public static implicit operator Guid(PlayerData player) => player?.AsGuid() ?? Guid.Empty;
     }
 }

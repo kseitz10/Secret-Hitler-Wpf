@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Threading.Tasks;
-using Microsoft.AspNet.SignalR;
 using Microsoft.Owin.Hosting;
 
 namespace SecretHitler.Server
@@ -19,12 +17,22 @@ namespace SecretHitler.Server
             // TODO Make configurable.
             ServerUrl = "http://127.0.0.1:8888";
             SignalR = WebApp.Start(ServerUrl);
-            var proxy = ClientProxy.Instance;
+            var proxy = Director.Instance;
 
             string cmd;
             do
             {
                 cmd = Console.ReadLine();
+
+                switch (cmd)
+                {
+                    case "start":
+                        ServerHub.StateMachine.Start();
+                        break;
+                    default:
+                        Console.WriteLine("Unsupported command. Try \"start\".");
+                        break;
+                }
             }
             while (cmd != "quit");
         }

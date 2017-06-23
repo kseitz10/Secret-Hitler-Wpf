@@ -12,7 +12,7 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
     {
         public GameStateMachine StateMachine { get; private set; }
 
-        public Mock<IClientProxy> ClientProxy { get; private set; }
+        public Mock<IPlayerDirector> Director { get; private set; }
 
         public Mock<GameDataManipulator> Manipulator { get; private set; }
 
@@ -25,8 +25,8 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
         [TestInitialize]
         public void TestInitialize()
         {
-            ClientProxy = new Mock<IClientProxy>();
-            StateMachine = new GameStateMachine(ClientProxy.Object);
+            Director = new Mock<IPlayerDirector>();
+            StateMachine = new GameStateMachine(Director.Object);
             Manipulator = new Mock<GameDataManipulator>(GameData) { CallBase = true };
             StateMachine.GameDataManipulator = Manipulator.Object;
             ResetPlayers();
