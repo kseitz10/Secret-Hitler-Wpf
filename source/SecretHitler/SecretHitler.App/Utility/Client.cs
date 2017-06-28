@@ -53,7 +53,7 @@ namespace SecretHitler.App.Utility
             //// _connection.Closed += Connection_Closed;
 
             _hubProxy = _connection.CreateHubProxy("ServerHub");
-            _hubProxy.On<string>("BroadcastMessage", _ => ClientUI?.MessageReceived(_));
+            _hubProxy.On<string>("MessageReceived", _ => ClientUI?.MessageReceived(_));
             _hubProxy.On<IEnumerable<PlayerData>>("UpdatePlayerStates", _ => ClientUI?.UpdatePlayerStates(_));
 
             try

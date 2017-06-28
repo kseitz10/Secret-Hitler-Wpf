@@ -13,6 +13,8 @@ namespace SecretHitler.Game.Interfaces
 
         void Broadcast(string message);
 
+        void SendMessage(Guid player, string message);
+
         void SelectPlayer(Guid chooser, GameState gameState, IEnumerable<Guid> candidates);
 
         void GetVotes(IEnumerable<Guid> voters);

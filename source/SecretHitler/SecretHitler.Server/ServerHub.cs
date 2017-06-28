@@ -12,31 +12,17 @@ namespace SecretHitler.Server
     {
         #region Persistent Data
 
-        public static Dictionary<string, PlayerData> Players { get; private set; } = new Dictionary<string, PlayerData>();
-
         public static GameStateMachine StateMachine { get; private set; } = new GameStateMachine(Director.Instance);
 
-        #endregion
+        public static List<PlayerData> Players => StateMachine.GameData.Players;
 
-        #region API
+        #endregion
 
         public void BroadcastMessage(string message)
         {
-            var player = Players[Context.ConnectionId];
-            message = $"{player.Name} says: {message}";
+            message = $"{Context.QueryString["nickname"]} says: {message}";
             BroadcastMessageImpl(message);
         }
-
-        private void BroadcastMessageImpl(string message)
-        {
-            // TODO Broadcast predefined server messages with enum instead of as string to support localization, if we care.
-            Console.WriteLine(message);
-            Clients.All.BroadcastMessage(message);
-        }
-
-        #endregion
-
-        #region Overrides
 
         public override Task OnConnected()
         {
@@ -44,41 +30,42 @@ namespace SecretHitler.Server
             if (!Guid.TryParse(Context.QueryString["guid"], out Guid guid))
                 throw new ArgumentException("Guid required");
 
-            var identifier = Context.ConnectionId;
-            var existingPlayer = Players.SingleOrDefault(_ => _.Value.Identifier == guid);
-            if (existingPlayer.Value != null)
+            var signalrConnectionId = Context.ConnectionId;
+            var existingPlayer = Players.SingleOrDefault(_ => _.Identifier == guid);
+            if (existingPlayer != null)
             {
-                Players.Remove(existingPlayer.Key);
-                Players[identifier] = existingPlayer.Value;
+                Groups.Add(signalrConnectionId, guid.ToString());
                 BroadcastMessageImpl($"Client {nickname} has rejoined.");
             }
             else
             {
-                Players[identifier] = new PlayerData() { Name = nickname };
-                StateMachine.GameData.Players.Add(Players[identifier]);
+                // TODO Creating the player is not the responsibility of this object.
+                var player = new PlayerData() { Name = nickname, Identifier = guid };
+                StateMachine.GameData.Players.Add(player);
+                Groups.Add(signalrConnectionId, guid.ToString());
                 BroadcastMessageImpl($"Client {nickname} connected.");
             }
 
-            Clients.All.UpdatePlayerStates(Players.Select(_ => _.Value).ToList());
+            Clients.All.UpdatePlayerStates(Players);
             return base.OnConnected();
         }
 
         public override Task OnDisconnected(bool stopCalled)
         {
             // TODO Handle all the problems caused by disconnecting players.
-            var player = Players[Context.ConnectionId];
-            player.IsAlive = false;
-            BroadcastMessageImpl($"Client {player.Name} disconnected.");
+            ////var player = Players.Single(_ => _.HasSameIdentifierAs(;
+            ////player.IsAlive = false;
+            ////BroadcastMessageImpl($"Client {player.Name} disconnected.");
 
-            Clients.All.UpdatePlayerStates(Players.Select(_ => _.Value).ToList());
+            ////Clients.All.UpdatePlayerStates(Players);
             return base.OnDisconnected(stopCalled);
         }
 
-        public override Task OnReconnected()
+        private void BroadcastMessageImpl(string message)
         {
-            return base.OnReconnected();
+            // TODO Broadcast predefined server messages with enum instead of as string to support localization, if we care.
+            Console.WriteLine(message);
+            Clients.All.MessageReceived(message);
         }
-
-        #endregion
     }
 }

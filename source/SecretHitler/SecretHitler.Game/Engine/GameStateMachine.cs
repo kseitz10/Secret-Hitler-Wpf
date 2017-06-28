@@ -213,6 +213,35 @@ namespace SecretHitler.Game.Engine
         private void PrepareGame()
         {
             GameDataManipulator.ResetGame();
+
+            foreach (var p in GameData.Players)
+            {
+                switch (p.Role)
+                {
+                    case PlayerRole.Hitler:
+                        Director.SendMessage(p, "YOU ARE HITLER!");
+                        if (GameData.Players.Count >= 7)
+                            Director.SendMessage(p, "You do not know the identities of the other fascists.");
+                        else
+                            Director.SendMessage(p, $"The other fascist is: {GameData.Players.Single(f => !f.HasSameIdentifierAs(p) && f.Role == PlayerRole.Fascist).Name}!");
+                        break;
+                    case PlayerRole.Fascist:
+                        Director.SendMessage(p, "YOU ARE A FASCIST!");
+
+                        var fascists = GameData.Players.Where(f => !f.HasSameIdentifierAs(p) && f.Role == PlayerRole.Fascist).Select(f => f.Name);
+                        if (fascists.Any())
+                            Director.SendMessage(p, $"The other fascist(s) are: {string.Join(", ", fascists)}!");
+
+                        Director.SendMessage(p, $"Hitler is: {GameData.Players.Single(f => f.Role == PlayerRole.Hitler).Name}!");
+                        break;
+                    case PlayerRole.Liberal:
+                        Director.SendMessage(p, "YOU ARE A LIBERAL!");
+                        break;
+                }
+
+                Director.SendMessage(p, "Always remember: DO NOT RUIN THE GAME! Good luck!");
+            }
+
             PresidentialSuccession();
         }
 

@@ -1,17 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
+﻿using SecretHitler.App.ViewModels;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using System.ComponentModel;
 
 namespace SecretHitler.App.Views
 {
@@ -23,6 +12,29 @@ namespace SecretHitler.App.Views
         public GameSurfaceView()
         {
             InitializeComponent();
+
+            DataContextChanged += (s, e) =>
+            {
+                var oldVm = e.OldValue as GameSurfaceViewModel;
+                var newVm = e.NewValue as GameSurfaceViewModel;
+
+                if (oldVm != null)
+                    oldVm.PropertyChanged -= OnViewModelPropChanged;
+
+                if (newVm != null)
+                    newVm.PropertyChanged += OnViewModelPropChanged;
+            };
+        }
+
+        private void OnViewModelPropChanged(object sender, PropertyChangedEventArgs e)
+        {
+            var vm = DataContext as GameSurfaceViewModel;
+            if (vm == null)
+                return;
+
+            // TODO No scrolljacking if user manually scrolled.
+            if (e.PropertyName == nameof(GameSurfaceViewModel.Messages))
+                MessagesTextBox.ScrollToEnd();
         }
     }
 }

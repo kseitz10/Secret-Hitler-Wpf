@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using SecretHitler.Game.Enums;
 using SecretHitler.Game.Interfaces;
 using System.Threading.Tasks;
+using System.Windows.Threading;
+using System.Windows;
 
 namespace SecretHitler.App.ViewModels
 {
@@ -84,11 +86,17 @@ namespace SecretHitler.App.ViewModels
             MessageToSend = string.Empty;
         }
 
+        private void Dispatch(Action callback)
+        {
+            // TODO Better dispatching. Where's CheckAccess?
+            Application.Current.Dispatcher.Invoke(callback);
+        }
+
         #region Event Handlers
 
         public void UpdatePlayerStates(IEnumerable<IPlayerInfo> playerData)
         {
-            Players = new List<IPlayerInfo>(playerData);
+            Dispatch(() => Players = new List<IPlayerInfo>(playerData));
         }
 
         public void UpdateLoyalty(PlayerRole role)
@@ -98,7 +106,7 @@ namespace SecretHitler.App.ViewModels
 
         public void MessageReceived(string message)
         {
-            Messages = string.Concat(Messages, Environment.NewLine, message);
+            Dispatch(() => Messages = string.Concat(Messages, Environment.NewLine, message));
         }
 
         public Task<Guid> SelectPlayer(GameState gameState, IEnumerable<Guid> candidates)
