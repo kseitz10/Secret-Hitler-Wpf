@@ -43,7 +43,17 @@ namespace SecretHitler.Server
                 var player = new PlayerData() { Name = nickname, Identifier = guid };
                 StateMachine.GameData.Players.Add(player);
                 Groups.Add(signalrConnectionId, guid.ToString());
-                BroadcastMessageImpl($"Client {nickname} connected.");
+
+                // Add a short delay. Uggh.
+                Task.Run(async () =>
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(1));
+                    BroadcastMessageImpl($"Client {nickname} connected.");
+
+                    if (StateMachine.MachineState != StateMachineState.None)
+                        StateMachine.DisseminateGameData();
+                });
+
             }
 
             return base.OnConnected();

@@ -72,6 +72,15 @@ namespace SecretHitler.Game.Engine
         }
 
         /// <summary>
+        /// Sends updated game data to players.
+        /// </summary>
+        public void DisseminateGameData()
+        {
+            foreach (var p in GameData.Players)
+                Director.UpdateGameData(p, PrepareGameDataForPlayerDissemination(p));
+        }
+
+        /// <summary>
         /// Indicates a simple acknowledgement from a client.
         /// </summary>
         /// <param name="acknowledge">Favorable or unfavorable response, or null if not applicable.</param>
@@ -209,12 +218,6 @@ namespace SecretHitler.Game.Engine
         #endregion
 
         #region Private Methods
-
-        private void DisseminateGameData()
-        {
-            foreach (var p in GameData.Players)
-                Director.UpdateGameData(p, PrepareGameDataForPlayerDissemination(p));
-        }
 
         private GameData PrepareGameDataForPlayerDissemination(IPlayerInfo player)
         {
