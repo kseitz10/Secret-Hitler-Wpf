@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using SecretHitler.Game.Enums;
 using SecretHitler.Game.Utility;
+using SecretHitler.Game.Entities;
 
 namespace SecretHitler.Game.Engine
 {
@@ -48,12 +49,7 @@ namespace SecretHitler.Game.Engine
             // Intentionally blank, but a good AI would do something with this information.
         }
 
-        public void UpdateLoyalty(PlayerRole role)
-        {
-            // Intentionally blank, but a good AI would do something with this information.
-        }
-
-        public void UpdatePlayerStates(IEnumerable<IPlayerInfo> playerData)
+        public void UpdateGameData(GameData gameData)
         {
             // Intentionally blank, but a good AI would do something with this information.
         }

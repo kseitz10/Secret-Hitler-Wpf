@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Microsoft.AspNet.SignalR;
 using SecretHitler.Game.Enums;
 using SecretHitler.Game.Interfaces;
+using SecretHitler.Game.Entities;
 
 namespace SecretHitler.Server
 {
@@ -40,9 +41,9 @@ namespace SecretHitler.Server
             GetUser(player).MessageReceived(message);
         }
 
-        public void UpdatePlayerStates(IEnumerable<IPlayerInfo> playerData)
+        public void UpdateGameData(Guid player, GameData gameData)
         {
-            Context.Clients.All.UpdatePlayerStates(playerData);
+            GetUser(player).UpdateGameData(gameData);
         }
 
         public void SelectPlayer(Guid chooser, GameState gameState, IEnumerable<Guid> candidates)

@@ -210,38 +210,55 @@ namespace SecretHitler.Game.Engine
 
         #region Private Methods
 
+        private void DisseminateGameData()
+        {
+            foreach (var p in GameData.Players)
+                Director.UpdateGameData(p, PrepareGameDataForPlayerDissemination(p));
+        }
+
+        private GameData PrepareGameDataForPlayerDissemination(IPlayerInfo player)
+        {
+            // This data can be given to all players.
+            var gd = new GameData
+            {
+                GameGuid = GameData.GameGuid,
+                EnactedFascistPolicyCount = GameData.EnactedFascistPolicyCount,
+                EnactedLiberalPolicyCount = GameData.EnactedLiberalPolicyCount,
+                ElectionTracker = GameData.ElectionTracker,
+                PresidentialQueue = new Queue<Guid>(GameData.PresidentialQueue)
+            };
+
+            var canDiscloseFascists = player.Role == PlayerRole.Fascist ||
+                (player.Role == PlayerRole.Hitler && GameData.Players.Count <= 6);
+            var canDiscloseHitler = player.Role != PlayerRole.Liberal;
+
+            gd.Players.AddRange(GameData.Players.Select(p =>
+            {
+                var rtn = new PlayerData()
+                {
+                    Identifier = p.Identifier,
+                    IsAlive = p.IsAlive,
+                    IsChancellor = p.IsChancellor,
+                    IsPresident = p.IsPresident,
+                    Name = p.Name
+                };
+
+                if (p.Role == PlayerRole.Hitler && canDiscloseHitler)
+                    rtn.Role = PlayerRole.Hitler;
+                else if (p.Role == PlayerRole.Fascist && canDiscloseFascists)
+                    rtn.Role = PlayerRole.Fascist;
+                else if (p.HasSameIdentifierAs(player))
+                    rtn.Role = PlayerRole.Liberal;
+
+                return rtn;
+            }));
+
+            return gd;
+        }
+
         private void PrepareGame()
         {
             GameDataManipulator.ResetGame();
-
-            foreach (var p in GameData.Players)
-            {
-                switch (p.Role)
-                {
-                    case PlayerRole.Hitler:
-                        Director.SendMessage(p, "YOU ARE HITLER!");
-                        if (GameData.Players.Count >= 7)
-                            Director.SendMessage(p, "You do not know the identities of the other fascists.");
-                        else
-                            Director.SendMessage(p, $"The other fascist is: {GameData.Players.Single(f => !f.HasSameIdentifierAs(p) && f.Role == PlayerRole.Fascist).Name}!");
-                        break;
-                    case PlayerRole.Fascist:
-                        Director.SendMessage(p, "YOU ARE A FASCIST!");
-
-                        var fascists = GameData.Players.Where(f => !f.HasSameIdentifierAs(p) && f.Role == PlayerRole.Fascist).Select(f => f.Name);
-                        if (fascists.Any())
-                            Director.SendMessage(p, $"The other fascist(s) are: {string.Join(", ", fascists)}!");
-
-                        Director.SendMessage(p, $"Hitler is: {GameData.Players.Single(f => f.Role == PlayerRole.Hitler).Name}!");
-                        break;
-                    case PlayerRole.Liberal:
-                        Director.SendMessage(p, "YOU ARE A LIBERAL!");
-                        break;
-                }
-
-                Director.SendMessage(p, "Always remember: DO NOT RUIN THE GAME! Good luck!");
-            }
-
             PresidentialSuccession();
         }
 
@@ -266,7 +283,7 @@ namespace SecretHitler.Game.Engine
             var candidates = GameData.Players.Where(_ => _.IsAlive && !_.IsPresident && !GameData.IneligibleChancellors.Contains(_.Identifier)).ToArray();
             MachineState = StateMachineState.AwaitingNomination;
 
-            Director.UpdatePlayerStates(GameData.Players);
+            DisseminateGameData();
             Director.Broadcast($"{GameData.President.Name} is now president and will nominate a chancellor.");
             Director.SelectPlayer(GameData.President, GameState.ChancellorNomination, candidates.AsGuids());
         }

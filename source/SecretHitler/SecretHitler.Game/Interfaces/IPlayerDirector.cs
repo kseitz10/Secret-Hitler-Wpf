@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using SecretHitler.Game.Enums;
 using System;
+using SecretHitler.Game.Entities;
 
 namespace SecretHitler.Game.Interfaces
 {
@@ -9,7 +10,7 @@ namespace SecretHitler.Game.Interfaces
     /// </summary>
     public interface IPlayerDirector
     {
-        void UpdatePlayerStates(IEnumerable<IPlayerInfo> playerData);
+        void UpdateGameData(Guid player, GameData gameData);
 
         void Broadcast(string message);
 

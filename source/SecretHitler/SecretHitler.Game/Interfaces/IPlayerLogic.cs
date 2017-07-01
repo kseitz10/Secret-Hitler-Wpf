@@ -1,4 +1,5 @@
-﻿using SecretHitler.Game.Enums;
+﻿using SecretHitler.Game.Entities;
+using SecretHitler.Game.Enums;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -11,9 +12,7 @@ namespace SecretHitler.Game.Interfaces
     /// </summary>
     public interface IPlayerLogic
     {
-        void UpdatePlayerStates(IEnumerable<IPlayerInfo> playerData);
-
-        void UpdateLoyalty(PlayerRole role);
+        void UpdateGameData(GameData playerData);
 
         void MessageReceived(string message);
 

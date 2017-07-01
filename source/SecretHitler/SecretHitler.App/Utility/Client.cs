@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNet.SignalR.Client;
 using SecretHitler.App.Interfaces;
 using SecretHitler.Game.Entities;
+using SecretHitler.Game.Enums;
 using SecretHitler.Game.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -54,7 +55,7 @@ namespace SecretHitler.App.Utility
 
             _hubProxy = _connection.CreateHubProxy("ServerHub");
             _hubProxy.On<string>("MessageReceived", _ => ClientUI?.MessageReceived(_));
-            _hubProxy.On<IEnumerable<PlayerData>>("UpdatePlayerStates", _ => ClientUI?.UpdatePlayerStates(_));
+            _hubProxy.On<GameData>("UpdateGameData", _ => ClientUI?.UpdateGameData(_));
 
             try
             {

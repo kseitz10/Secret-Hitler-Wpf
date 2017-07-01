@@ -12,6 +12,11 @@ namespace SecretHitler.Game.Entities
     public class GameData
     {
         /// <summary>
+        /// The Guid for this game.
+        /// </summary>
+        public Guid GameGuid { get; set; } = Guid.NewGuid();
+
+        /// <summary>
         /// All known players.
         /// </summary>
         public List<PlayerData> Players { get; set; } = new List<PlayerData>();

@@ -8,6 +8,9 @@ using SecretHitler.Game.Interfaces;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 using System.Windows;
+using SecretHitler.Game.Entities;
+using System.Linq;
+using SecretHitler.Game.Utility;
 
 namespace SecretHitler.App.ViewModels
 {
@@ -19,33 +22,33 @@ namespace SecretHitler.App.ViewModels
         /// <summary>
         /// Constructor for the game surface viewmodel.
         /// </summary>
+        /// <param name="myGuid">Guid for this client. Used to look up my player information.</param>
         /// <param name="client">SignalR class used to coordinate with the server.</param>
-        public GameSurfaceViewModel(IClient client)
+        public GameSurfaceViewModel(Guid myGuid, IClient client)
         {
             Client = client;
+            _myGuid = myGuid;
         }
 
-        private List<IPlayerInfo> _players = new List<IPlayerInfo>();
+        private Guid _myGuid;
         private string _messages = string.Empty;
         private string _messageToSend = string.Empty;
         private RelayCommand _sendMessageCommand;
+        private GameData _gameData;
 
         #region Properties
 
         private IClient Client { get; set; }
 
         /// <summary>
-        /// The players in the lobby/game.
+        /// This player's data.
         /// </summary>
-        public List<IPlayerInfo> Players
-        {
-            get { return _players; }
-            private set
-            {
-                _players = value;
-                RaisePropertyChanged();
-            }
-        }
+        public IPlayerInfo Me => Players.FirstOrDefault(_ => _.Identifier == _myGuid);
+
+        /// <summary>
+        /// The players in the game.
+        /// </summary>
+        public IEnumerable<IPlayerInfo> Players => _gameData?.Players ?? new List<PlayerData>();
 
         /// <summary>
         /// Gets the messages that have been received.
@@ -94,14 +97,32 @@ namespace SecretHitler.App.ViewModels
 
         #region Event Handlers
 
-        public void UpdatePlayerStates(IEnumerable<IPlayerInfo> playerData)
+        public void UpdateGameData(GameData gameData)
         {
-            Dispatch(() => Players = new List<IPlayerInfo>(playerData));
-        }
+            Dispatch(() =>
+            {
+                // New game clears all history.
+                if (gameData?.GameGuid != _gameData?.GameGuid)
+                    _gameData = null;
 
-        public void UpdateLoyalty(PlayerRole role)
-        {
-            throw new NotImplementedException();
+                // This shouldn't happen...
+                if (gameData == null)
+                    return;
+
+                var oldRole = Me?.Role;
+
+                _gameData = gameData;
+
+                if (Me.Role != oldRole)
+                {
+                    MessageReceived("Your role in this game is: " + Me.Role);
+                    MessageReceived("The new presidential rotation is as follows: " +
+                        string.Join(", ", gameData.PresidentialQueue.Select(guid => gameData.Players.First(p => p.Identifier == guid).Name)));
+                }
+
+                RaisePropertyChanged(nameof(Players));
+                RaisePropertyChanged(nameof(Me));
+            });
         }
 
         public void MessageReceived(string message)

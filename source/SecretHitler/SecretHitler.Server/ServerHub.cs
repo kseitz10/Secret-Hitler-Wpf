@@ -46,7 +46,6 @@ namespace SecretHitler.Server
                 BroadcastMessageImpl($"Client {nickname} connected.");
             }
 
-            Clients.All.UpdatePlayerStates(Players);
             return base.OnConnected();
         }
 

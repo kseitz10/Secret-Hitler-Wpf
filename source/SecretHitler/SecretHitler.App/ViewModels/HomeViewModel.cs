@@ -135,7 +135,7 @@ namespace SecretHitler.App.ViewModels
             var client = new Client($"http://{Hostname}:{PortNumber}", Nickname, _clientGuid);
             if (await client.ConnectAsync())
             {
-                var gameVm = new GameSurfaceViewModel(client);
+                var gameVm = new GameSurfaceViewModel(_clientGuid, client);
                 client.ClientUI = gameVm;
                 ShellViewModel.Instance.UpdateMainRegion(gameVm);
             }
