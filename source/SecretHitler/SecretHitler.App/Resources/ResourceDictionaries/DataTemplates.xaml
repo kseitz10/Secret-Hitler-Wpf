@@ -11,4 +11,15 @@
         <views:HomeView />
     </DataTemplate>
 
+    <DataTemplate DataType="{x:Type viewmodels:PlayerSelectionViewModel}">
+        <StackPanel>
+            <TextBlock Text="{Binding Prompt}" Margin="0,0,0,10" />
+            <ListBox Margin="0,0,0,10"
+                     DisplayMemberPath="Name"
+                     ItemsSource="{Binding Players}"
+                     SelectedItem="{Binding SelectedPlayer}" />
+            <Button Content="Choose" Command="{Binding AcceptCommand}" />
+        </StackPanel>
+    </DataTemplate>
+
 </ResourceDictionary>

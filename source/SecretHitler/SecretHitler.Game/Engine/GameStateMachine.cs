@@ -95,16 +95,17 @@ namespace SecretHitler.Game.Engine
                     }
                     else if (acknowledge.Value)
                     {
-
+                        Director.Broadcast("The policies were successfully vetoed!");
                     }
                     else
                     {
-
+                        Director.Broadcast("Unsuccessful veto. The chancellor must choose a policy.");
                     }
 
                     break;
 
                 case StateMachineState.AwaitingPolicyPeekConfirmation:
+                    Director.Broadcast("The president has seen the topmost policies on the draw pile.");
                     PresidentialSuccession();
                     break;
 
@@ -117,18 +118,20 @@ namespace SecretHitler.Game.Engine
         /// Indicates that a player has been selected by the client that was last issued a request.
         /// </summary>
         /// <param name="player">The selected player.</param>
-        public void PlayerSelected(IPlayerInfo player)
+        public void PlayerSelected(Guid player)
         {
             switch (MachineState)
             {
                 case StateMachineState.AwaitingNomination:
                     GameData.Chancellor = CoercePlayer(player);
                     MachineState = StateMachineState.AwaitingVotes;
+                    DisseminateGameData();
+                    Director.Broadcast("It is time to vote.");
                     Director.GetVotes(GameData.Players.Where(_ => _.IsAlive).AsGuids());
                     break;
 
                 case StateMachineState.AwaitingSpecialElectionPick:
-                    PresidentialSuccession(false, player);
+                    PresidentialSuccession(false, CoercePlayer(player));
                     break;
 
                 case StateMachineState.AwaitingExecution:
@@ -157,10 +160,12 @@ namespace SecretHitler.Game.Engine
                     var policy = myPolicies.First();
                     if (policy == PolicyType.Fascist)
                     {
+                        Director.Broadcast("A fascist policy has been enacted!");
                         GameData.EnactedFascistPolicyCount++;
                     }
                     else if (policy == PolicyType.Liberal)
                     {
+                        Director.Broadcast("A liberal policy has been enacted!");
                         GameData.EnactedLiberalPolicyCount++;
                     }
 
@@ -173,7 +178,8 @@ namespace SecretHitler.Game.Engine
                     }
                     else
                     {
-                        // TODO Veto
+                        Director.Broadcast("A veto has been requested.");
+                        // TODO Veto and dissemination
                     }
 
                     break;
@@ -197,19 +203,27 @@ namespace SecretHitler.Game.Engine
             var pass = votes.Count(_ => _);
             var fail = votes.Count() - pass;
 
+            var message = $"Votes have been tallied: {pass} ja, {fail} nein.";
             if (pass > fail)
             {
+                Director.Broadcast($"{message} The election was successful.");
                 MachineState = StateMachineState.AwaitingPresidentialPolicies;
+                DisseminateGameData();
                 Director.GetPresidentialPolicies(GameData.President, PolicyDeck.Draw(Constants.PresidentialPolicyDrawCount));
             }
             else
             {
-                if (GameDataManipulator.UpdateElectionTracker())
+                message = $"{message} The election failed.";
+                var chaos = GameDataManipulator.UpdateElectionTracker();
+                DisseminateGameData();
+                if (chaos)
                 {
+                    Director.Broadcast($"{message} Due to inactive government, there is chaos on the streets!");
                     // TODO Policy win condition check.
                 }
                 else
                 {
+                    Director.Broadcast(message);
                     PresidentialSuccession(true);
                 }
             }
@@ -292,6 +306,8 @@ namespace SecretHitler.Game.Engine
         }
 
         private PlayerData CoercePlayer(IPlayerInfo player) => GameData.Players.Single(_ => _.Identifier == player.Identifier);
+
+        private PlayerData CoercePlayer(Guid guid) => GameData.Players.Single(_ => _.Identifier == guid);
 
         #endregion
 

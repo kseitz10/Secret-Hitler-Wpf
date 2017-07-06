@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using SecretHitler.Game.Enums;
+using System;
 
 namespace SecretHitler.Game.Interfaces
 {
@@ -12,7 +13,7 @@ namespace SecretHitler.Game.Interfaces
         /// Indicates that a player has been selected by the client that was last issued a request.
         /// </summary>
         /// <param name="player">The selected player.</param>
-        void PlayerSelected(IPlayerInfo player);
+        void PlayerSelected(Guid player);
 
         /// <summary>
         /// Indicates that votes have been collected from all active players.

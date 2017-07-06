@@ -24,6 +24,11 @@ namespace SecretHitler.Server
             BroadcastMessageImpl(message);
         }
 
+        public void PlayerSelected(Guid playerGuid)
+        {
+            StateMachine.PlayerSelected(playerGuid);
+        }
+
         public override Task OnConnected()
         {
             var nickname = Context.QueryString["nickname"];
@@ -53,7 +58,6 @@ namespace SecretHitler.Server
                     if (StateMachine.MachineState != StateMachineState.None)
                         StateMachine.DisseminateGameData();
                 });
-
             }
 
             return base.OnConnected();

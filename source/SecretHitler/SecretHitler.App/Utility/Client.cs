@@ -50,12 +50,17 @@ namespace SecretHitler.App.Utility
                 { "guid", _clientGuid.ToString() }
             });
 
+            _connection.TraceLevel = TraceLevels.All;
+            _connection.TraceWriter = Console.Out;
+
             // TODO
             //// _connection.Closed += Connection_Closed;
 
             _hubProxy = _connection.CreateHubProxy("ServerHub");
             _hubProxy.On<string>("MessageReceived", _ => ClientUI?.MessageReceived(_));
             _hubProxy.On<GameData>("UpdateGameData", _ => ClientUI?.UpdateGameData(_));
+            _hubProxy.On<GameState, IEnumerable<Guid>>("PlayerSelectionRequested", async (state, players) =>
+                PlayerSelected(await ClientUI?.SelectPlayer(state, players)));
 
             try
             {
@@ -78,6 +83,15 @@ namespace SecretHitler.App.Utility
             _hubProxy = null;
             _connection?.Dispose();
             _connection = null;
+        }
+
+        /// <summary>
+        /// Notify the server that a player has been selected.
+        /// </summary>
+        /// <param name="playerGuid">Selected player</param>
+        public void PlayerSelected(Guid playerGuid)
+        {
+            _hubProxy.Invoke("PlayerSelected", playerGuid);
         }
 
         /// <summary>

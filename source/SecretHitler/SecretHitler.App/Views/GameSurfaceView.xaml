@@ -138,7 +138,7 @@
 
             <Grid>
                 <!-- Agenda/drawpile area-->
-                <Viewbox Margin="20">
+                <Viewbox Margin="20" IsEnabled="{Binding ActiveModal, Converter={StaticResource NullToTrueConverter}}">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition />
@@ -157,59 +157,76 @@
                         <Image Grid.Row="1" Grid.Column="1" Source="pack://application:,,,/Resources/Images/agenda_fascist_1.png" Margin="10" />
                     </Grid>
                 </Viewbox>
+
+                <StackPanel x:Name="PrivateCardPanel" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,20,0" Height="40">
+                    <ContentPresenter Content="{Binding Me.Role}" Height="300">
+                        <ContentPresenter.ContentTemplate>
+                            <DataTemplate DataType="{x:Type enums:PlayerRole}">
+                                <Image x:Name="RoleImage" Stretch="UniformToFill" />
+                                <DataTemplate.Triggers>
+                                    <Trigger Property="Content" Value="{x:Static enums:PlayerRole.Fascist}">
+                                        <Setter TargetName="RoleImage" Property="Source" Value="pack://application:,,,/Resources/Images/role_fascist.png" />
+                                    </Trigger>
+                                    <Trigger Property="Content" Value="{x:Static enums:PlayerRole.Hitler}">
+                                        <Setter TargetName="RoleImage" Property="Source" Value="pack://application:,,,/Resources/Images/role_hitler.png" />
+                                    </Trigger>
+                                    <Trigger Property="Content" Value="{x:Static enums:PlayerRole.Liberal}">
+                                        <Setter TargetName="RoleImage" Property="Source" Value="pack://application:,,,/Resources/Images/role_liberal.png" />
+                                    </Trigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </ContentPresenter.ContentTemplate>
+                    </ContentPresenter>
+
+                    <StackPanel.Style>
+                        <Style TargetType="{x:Type StackPanel}">
+                            <Style.Resources>
+                                <Storyboard x:Key="SlidePrivateCardsUpStoryboard">
+                                    <DoubleAnimation Storyboard.TargetProperty="Height" To="285" Duration="0:0:0.25">
+                                        <DoubleAnimation.EasingFunction>
+                                            <ExponentialEase EasingMode="EaseOut" />
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                </Storyboard>
+                                <Storyboard x:Key="SlidePrivateCardsDownStoryboard">
+                                    <DoubleAnimation Storyboard.TargetProperty="Height" To="40" Duration="0:0:0.25">
+                                        <DoubleAnimation.EasingFunction>
+                                            <ExponentialEase EasingMode="EaseOut" />
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                </Storyboard>
+                            </Style.Resources>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Trigger.EnterActions>
+                                        <BeginStoryboard Storyboard="{StaticResource SlidePrivateCardsUpStoryboard}" />
+                                    </Trigger.EnterActions>
+                                    <Trigger.ExitActions>
+                                        <BeginStoryboard Storyboard="{StaticResource SlidePrivateCardsDownStoryboard}" />
+                                    </Trigger.ExitActions>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                </StackPanel>
+
+                <ContentControl Content="{Binding ActiveModal}" IsHitTestVisible="{Binding ActiveModal, Converter={StaticResource NullToFalseConverter}}">
+                    <ContentControl.Template>
+                        <ControlTemplate TargetType="{x:Type ContentControl}">
+                            <Border x:Name="Container" Background="#DD000000">
+                                <Border Background="White" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10" Padding="15">
+                                    <ContentPresenter Content="{TemplateBinding Content}" />
+                                </Border>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="Content" Value="{x:Null}">
+                                    <Setter TargetName="Container" Property="Visibility" Value="Collapsed" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </ContentControl.Template>
+                </ContentControl>
             </Grid>
         </Border>
-
-        <StackPanel x:Name="PrivateCardPanel" Grid.Column="2" Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,20,0" Height="40">
-            <ContentPresenter Content="{Binding Me.Role}" Height="300">
-                <ContentPresenter.ContentTemplate>
-                    <DataTemplate DataType="{x:Type enums:PlayerRole}">
-                        <Image x:Name="RoleImage" Stretch="UniformToFill" />
-                        <DataTemplate.Triggers>
-                            <Trigger Property="Content" Value="{x:Static enums:PlayerRole.Fascist}">
-                                <Setter TargetName="RoleImage" Property="Source" Value="pack://application:,,,/Resources/Images/role_fascist.png" />
-                            </Trigger>
-                            <Trigger Property="Content" Value="{x:Static enums:PlayerRole.Hitler}">
-                                <Setter TargetName="RoleImage" Property="Source" Value="pack://application:,,,/Resources/Images/role_hitler.png" />
-                            </Trigger>
-                            <Trigger Property="Content" Value="{x:Static enums:PlayerRole.Liberal}">
-                                <Setter TargetName="RoleImage" Property="Source" Value="pack://application:,,,/Resources/Images/role_liberal.png" />
-                            </Trigger>
-                        </DataTemplate.Triggers>
-                    </DataTemplate>
-                </ContentPresenter.ContentTemplate>
-            </ContentPresenter>
-
-            <StackPanel.Style>
-                <Style TargetType="{x:Type StackPanel}">
-                    <Style.Resources>
-                        <Storyboard x:Key="SlidePrivateCardsUpStoryboard">
-                            <DoubleAnimation Storyboard.TargetProperty="Height" To="285" Duration="0:0:0.25">
-                                <DoubleAnimation.EasingFunction>
-                                    <ExponentialEase EasingMode="EaseOut" />
-                                </DoubleAnimation.EasingFunction>
-                            </DoubleAnimation>
-                        </Storyboard>
-                        <Storyboard x:Key="SlidePrivateCardsDownStoryboard">
-                            <DoubleAnimation Storyboard.TargetProperty="Height" To="40" Duration="0:0:0.25">
-                                <DoubleAnimation.EasingFunction>
-                                    <ExponentialEase EasingMode="EaseOut" />
-                                </DoubleAnimation.EasingFunction>
-                            </DoubleAnimation>
-                        </Storyboard>
-                    </Style.Resources>
-                    <Style.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Trigger.EnterActions>
-                                <BeginStoryboard Storyboard="{StaticResource SlidePrivateCardsUpStoryboard}" />
-                            </Trigger.EnterActions>
-                            <Trigger.ExitActions>
-                                <BeginStoryboard Storyboard="{StaticResource SlidePrivateCardsDownStoryboard}" />
-                            </Trigger.ExitActions>
-                        </Trigger>
-                    </Style.Triggers>
-                </Style>
-            </StackPanel.Style>
-        </StackPanel>
     </Grid>
 </UserControl>

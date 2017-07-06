@@ -1,4 +1,5 @@
 ﻿using SecretHitler.Game.Interfaces;
+using System;
 using System.Threading.Tasks;
 
 namespace SecretHitler.App.Interfaces
@@ -28,5 +29,11 @@ namespace SecretHitler.App.Interfaces
         /// </summary>
         /// <param name="message">Message text.</param>
         void SendMessage(string message);
+
+        /// <summary>
+        /// Notify the server a player has been selected.
+        /// </summary>
+        /// <param name="playerGuid">Selected player</param>
+        void PlayerSelected(Guid playerGuid);
     }
 }

@@ -48,7 +48,7 @@ namespace SecretHitler.Server
 
         public void SelectPlayer(Guid chooser, GameState gameState, IEnumerable<Guid> candidates)
         {
-            
+            GetUser(chooser).PlayerSelectionRequested(gameState, candidates);
         }
 
         public void GetVotes(IEnumerable<Guid> voters)

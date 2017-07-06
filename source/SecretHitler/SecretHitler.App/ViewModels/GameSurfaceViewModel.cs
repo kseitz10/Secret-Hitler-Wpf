@@ -35,6 +35,7 @@ namespace SecretHitler.App.ViewModels
         private string _messageToSend = string.Empty;
         private RelayCommand _sendMessageCommand;
         private GameData _gameData;
+        private InteractionViewModelBase _activeModal;
 
         #region Properties
 
@@ -76,6 +77,19 @@ namespace SecretHitler.App.ViewModels
             }
         }
 
+        /// <summary>
+        /// The active viewmodel requesting input from the user.
+        /// </summary>
+        public InteractionViewModelBase ActiveModal
+        {
+            get => _activeModal;
+            private set
+            {
+                _activeModal = value;
+                RaisePropertyChanged();
+            }
+        }
+
         #endregion
 
         #region Methods
@@ -93,6 +107,12 @@ namespace SecretHitler.App.ViewModels
         {
             // TODO Better dispatching. Where's CheckAccess?
             Application.Current.Dispatcher.Invoke(callback);
+        }
+
+        private T Dispatch<T>(Func<T> callback)
+        {
+            // TODO Better dispatching. Where's CheckAccess?
+            return Application.Current.Dispatcher.Invoke(callback);
         }
 
         #region Event Handlers
@@ -132,7 +152,21 @@ namespace SecretHitler.App.ViewModels
 
         public Task<Guid> SelectPlayer(GameState gameState, IEnumerable<Guid> candidates)
         {
-            throw new NotImplementedException();
+            return Dispatch(async () =>
+            {
+                var selectionVm = new PlayerSelectionViewModel();
+                switch (gameState)
+                {
+                    case GameState.ChancellorNomination:
+                        selectionVm.Prompt = "Please select your desired chancellor.";
+                        break;
+                }
+
+                selectionVm.Players = _gameData.Players.Join(candidates, p => p.Identifier, c => c, (p, g) => p).Cast<IPlayerInfo>().ToList();
+                await ShowModalAsync(selectionVm);
+                return selectionVm.SelectedPlayer.Identifier;
+            });
+
         }
 
         public Task<bool> GetVote()
@@ -161,6 +195,16 @@ namespace SecretHitler.App.ViewModels
         }
 
         #endregion
+
+        private async Task<bool> ShowModalAsync(InteractionViewModelBase vm)
+        {
+            var tcs = new TaskCompletionSource<bool>();
+            vm.RegisterInteractionTaskCompletionSource(tcs);
+            ActiveModal = vm;
+            var result = await tcs.Task;
+            ActiveModal = null;
+            return result;
+        }
 
         #endregion
 
