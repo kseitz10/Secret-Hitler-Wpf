@@ -29,6 +29,11 @@ namespace SecretHitler.Server
             StateMachine.PlayerSelected(playerGuid);
         }
 
+        public void VoteSelected(bool vote)
+        {
+            StateMachine.VoteCollected(vote);
+        }
+
         public override Task OnConnected()
         {
             var nickname = Context.QueryString["nickname"];

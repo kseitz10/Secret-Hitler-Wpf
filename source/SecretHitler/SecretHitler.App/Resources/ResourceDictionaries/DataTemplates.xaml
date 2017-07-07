@@ -13,12 +13,31 @@
 
     <DataTemplate DataType="{x:Type viewmodels:PlayerSelectionViewModel}">
         <StackPanel>
-            <TextBlock Text="{Binding Prompt}" Margin="0,0,0,10" />
+            <TextBlock Text="{Binding Prompt}" Margin="0,0,0,10" FontWeight="Bold" />
             <ListBox Margin="0,0,0,10"
                      DisplayMemberPath="Name"
                      ItemsSource="{Binding Players}"
                      SelectedItem="{Binding SelectedPlayer}" />
             <Button Content="Choose" Command="{Binding AcceptCommand}" />
+        </StackPanel>
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type viewmodels:VoteViewModel}">
+        <StackPanel>
+            <TextBlock Text="Vote on the new administration!" FontWeight="Bold" />
+            <TextBlock>
+                <Run Text="President: " />
+                <Run Text="{Binding PresidentName}" />
+            </TextBlock>
+            <TextBlock>
+                <Run Text="Chancellor: " />
+                <Run Text="{Binding ChancellorName}" />
+            </TextBlock>
+
+            <UniformGrid Columns="2" Margin="0,10,0,0">
+                <Button Content="JA" Command="{Binding AcceptCommand}" Margin="0,0,5,0" />
+                <Button Content="NEIN" Command="{Binding CancelCommand}" Margin="5,0,0,0" />
+            </UniformGrid>
         </StackPanel>
     </DataTemplate>
 

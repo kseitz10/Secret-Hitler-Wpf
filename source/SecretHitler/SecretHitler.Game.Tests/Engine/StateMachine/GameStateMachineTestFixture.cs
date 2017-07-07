@@ -45,10 +45,17 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
                 var player = new PlayerData()
                 {
                     Identifier = Guid.NewGuid(),
+                    IsAlive = true
                 };
                 player.Name = player.Identifier.ToString();
                 Players.Add(player); // TODO Expose methods for player management.
             }
+        }
+
+        protected void VotesCollected(IEnumerable<bool> votes)
+        {
+            foreach (var v in votes)
+                StateMachine.VoteCollected(v);
         }
     }
 }

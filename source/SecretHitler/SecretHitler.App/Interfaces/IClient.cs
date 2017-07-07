@@ -35,5 +35,11 @@ namespace SecretHitler.App.Interfaces
         /// </summary>
         /// <param name="playerGuid">Selected player</param>
         void PlayerSelected(Guid playerGuid);
+
+        /// <summary>
+        /// Notify the server that a vote has been selected.
+        /// </summary>
+        /// <param name="vote">True or false vote for ja or nein respectively.</param>
+        void VoteSelected(bool vote);
     }
 }

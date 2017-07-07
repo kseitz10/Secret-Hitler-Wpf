@@ -53,7 +53,8 @@ namespace SecretHitler.Server
 
         public void GetVotes(IEnumerable<Guid> voters)
         {
-            throw new NotImplementedException();
+            foreach (var voter in voters)
+                GetUser(voter).PlayerVoteRequested();
         }
 
         public void GetPresidentialPolicies(Guid president, IEnumerable<PolicyType> drawnPolicies)

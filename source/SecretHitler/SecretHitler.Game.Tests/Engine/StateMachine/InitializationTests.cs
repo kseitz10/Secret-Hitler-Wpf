@@ -4,7 +4,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using SecretHitler.Game.Engine;
 using SecretHitler.Game.Enums;
-using SecretHitler.Game.Interfaces;
 using System;
 using SecretHitler.Game.Utility;
 

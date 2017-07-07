@@ -166,12 +166,15 @@ namespace SecretHitler.App.ViewModels
                 await ShowModalAsync(selectionVm);
                 return selectionVm.SelectedPlayer.Identifier;
             });
-
         }
 
         public Task<bool> GetVote()
         {
-            throw new NotImplementedException();
+            return Dispatch(() => ShowModalAsync(new VoteViewModel()
+            {
+                PresidentName = _gameData.President.Name,
+                ChancellorName = _gameData.Chancellor.Name
+            }));
         }
 
         public Task<IList<PolicyType>> SelectPolicies(IList<PolicyType> drawnPolicies, int allowedCount)

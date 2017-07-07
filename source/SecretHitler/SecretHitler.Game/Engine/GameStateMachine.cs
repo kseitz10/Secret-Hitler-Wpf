@@ -26,6 +26,8 @@ namespace SecretHitler.Game.Engine
 
         #region Properties
 
+        private object _voteLock = new object();
+
         /// <summary>
         /// The data backing the state machine.
         /// </summary>
@@ -55,6 +57,16 @@ namespace SecretHitler.Game.Engine
         /// Utility for managing the game state data.
         /// </summary>
         internal GameDataManipulator GameDataManipulator { get; set; }
+
+        /// <summary>
+        /// Ja vote count
+        /// </summary>
+        internal int JaVoteCount { get; set; }
+
+        /// <summary>
+        /// Nein vote count
+        /// </summary>
+        internal int NeinVoteCount { get; set; }
 
         #endregion
 
@@ -124,6 +136,7 @@ namespace SecretHitler.Game.Engine
             {
                 case StateMachineState.AwaitingNomination:
                     GameData.Chancellor = CoercePlayer(player);
+                    Director.Broadcast($"The president has nominated {GameData.Chancellor.Name} as chancellor.");
                     MachineState = StateMachineState.AwaitingVotes;
                     DisseminateGameData();
                     Director.Broadcast("It is time to vote.");
@@ -192,40 +205,51 @@ namespace SecretHitler.Game.Engine
         }
 
         /// <summary>
-        /// Indicates that votes have been collected from all active players.
+        /// Indicates that a vote has been collected.
         /// </summary>
-        /// <param name="votes">The collected votes.</param>
-        public void VotesCollected(IEnumerable<bool> votes)
+        /// <param name="vote">The collected vote.</param>
+        public void VoteCollected(bool vote)
         {
-            if (MachineState != StateMachineState.AwaitingVotes)
-                throw new GameStateException($"{nameof(VotesCollected)} called for invalid state {MachineState}.");
-
-            var pass = votes.Count(_ => _);
-            var fail = votes.Count() - pass;
-
-            var message = $"Votes have been tallied: {pass} ja, {fail} nein.";
-            if (pass > fail)
+            lock (_voteLock)
             {
-                Director.Broadcast($"{message} The election was successful.");
-                MachineState = StateMachineState.AwaitingPresidentialPolicies;
-                DisseminateGameData();
-                Director.GetPresidentialPolicies(GameData.President, PolicyDeck.Draw(Constants.PresidentialPolicyDrawCount));
-            }
-            else
-            {
-                message = $"{message} The election failed.";
-                var chaos = GameDataManipulator.UpdateElectionTracker();
-                DisseminateGameData();
-                if (chaos)
+                if (MachineState != StateMachineState.AwaitingVotes)
+                    throw new GameStateException($"{nameof(VoteCollected)} called for invalid state {MachineState}.");
+
+                if (vote)
+                    JaVoteCount++;
+                else
+                    NeinVoteCount++;
+
+                if (JaVoteCount + NeinVoteCount < GameData.Players.Count(_ => _.IsAlive))
+                    return;
+
+                var message = $"Votes have been tallied: {JaVoteCount} ja, {NeinVoteCount} nein.";
+                if (JaVoteCount > NeinVoteCount)
                 {
-                    Director.Broadcast($"{message} Due to inactive government, there is chaos on the streets!");
-                    // TODO Policy win condition check.
+                    Director.Broadcast($"{message} The election was successful.");
+                    MachineState = StateMachineState.AwaitingPresidentialPolicies;
+                    DisseminateGameData();
+                    Director.GetPresidentialPolicies(GameData.President, PolicyDeck.Draw(Constants.PresidentialPolicyDrawCount));
                 }
                 else
                 {
-                    Director.Broadcast(message);
-                    PresidentialSuccession(true);
+                    message = $"{message} The election failed.";
+                    var chaos = GameDataManipulator.UpdateElectionTracker();
+                    DisseminateGameData();
+                    if (chaos)
+                    {
+                        Director.Broadcast($"{message} Due to inactive government, there is chaos on the streets!");
+                        // TODO Policy win condition check.
+                    }
+                    else
+                    {
+                        Director.Broadcast(message);
+                        PresidentialSuccession(true);
+                    }
                 }
+
+                JaVoteCount = 0;
+                NeinVoteCount = 0;
             }
         }
     

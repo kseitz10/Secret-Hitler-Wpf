@@ -86,7 +86,7 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
             }));
 
             // Fail the election and investigate the resulting candidates offered to the next president.
-            StateMachine.VotesCollected(Enumerable.Range(0, Players.Count(_ => _.IsAlive)).Select(_ => false));
+            VotesCollected(Enumerable.Range(0, Players.Count(_ => _.IsAlive)).Select(_ => false));
 
             if (!success)
                 Assert.Fail("Did not get correct candidate list.");
@@ -117,7 +117,7 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
             StateMachine.MachineState = StateMachineState.AwaitingVotes;
             GameData.ElectionTracker = 1;
 
-            StateMachine.VotesCollected(Enumerable.Range(0, Pass).Select(_ => true).Concat(Enumerable.Range(0, Fail).Select(_ => false)));
+            VotesCollected(Enumerable.Range(0, Pass).Select(_ => true).Concat(Enumerable.Range(0, Fail).Select(_ => false)));
 
             Assert.AreEqual(StateMachine.MachineState, StateMachineState.AwaitingPresidentialPolicies);
             Assert.AreEqual(1, GameData.ElectionTracker, "Election tracker should not reset until policy is passed.");
@@ -137,7 +137,7 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
             StateMachine.MachineState = StateMachineState.AwaitingVotes;
             GameData.ElectionTracker = 1;
 
-            StateMachine.VotesCollected(Enumerable.Range(0, Pass).Select(_ => true).Concat(Enumerable.Range(0, Fail).Select(_ => false)));
+            VotesCollected(Enumerable.Range(0, Pass).Select(_ => true).Concat(Enumerable.Range(0, Fail).Select(_ => false)));
 
             Assert.AreEqual(StateMachine.MachineState, StateMachineState.AwaitingNomination);
             Manipulator.Verify(_ => _.UpdateElectionTracker(null));

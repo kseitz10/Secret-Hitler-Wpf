@@ -61,6 +61,7 @@ namespace SecretHitler.App.Utility
             _hubProxy.On<GameData>("UpdateGameData", _ => ClientUI?.UpdateGameData(_));
             _hubProxy.On<GameState, IEnumerable<Guid>>("PlayerSelectionRequested", async (state, players) =>
                 PlayerSelected(await ClientUI?.SelectPlayer(state, players)));
+            _hubProxy.On("PlayerVoteRequested", async () => VoteSelected(await ClientUI?.GetVote()));
 
             try
             {
@@ -92,6 +93,15 @@ namespace SecretHitler.App.Utility
         public void PlayerSelected(Guid playerGuid)
         {
             _hubProxy.Invoke("PlayerSelected", playerGuid);
+        }
+
+        /// <summary>
+        /// Notify the server that a vote has been selected.
+        /// </summary>
+        /// <param name="vote">True or false vote for ja or nein respectively.</param>
+        public void VoteSelected(bool vote)
+        {
+            _hubProxy.Invoke("VoteSelected", vote);
         }
 
         /// <summary>

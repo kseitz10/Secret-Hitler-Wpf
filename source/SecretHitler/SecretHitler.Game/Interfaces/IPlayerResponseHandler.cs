@@ -16,10 +16,10 @@ namespace SecretHitler.Game.Interfaces
         void PlayerSelected(Guid player);
 
         /// <summary>
-        /// Indicates that votes have been collected from all active players.
+        /// Indicates that a vote has been collected from a player.
         /// </summary>
-        /// <param name="votes">The collected votes.</param>
-        void VotesCollected(IEnumerable<bool> votes);
+        /// <param name="vote">The collected vote.</param>
+        void VoteCollected(bool vote);
 
         /// <summary>
         /// Indicates that one or more policies were selected by the client asked to select policies.
