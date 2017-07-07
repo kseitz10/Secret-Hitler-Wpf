@@ -62,6 +62,8 @@ namespace SecretHitler.App.Utility
             _hubProxy.On<GameState, IEnumerable<Guid>>("PlayerSelectionRequested", async (state, players) =>
                 PlayerSelected(await ClientUI?.SelectPlayer(state, players)));
             _hubProxy.On("PlayerVoteRequested", async () => VoteSelected(await ClientUI?.GetVote()));
+            _hubProxy.On<IEnumerable<PolicyType>, int>("PolicySelectionRequested", async (policies, ct) =>
+                PoliciesSelected(await ClientUI?.SelectPolicies(policies, ct)));
 
             try
             {
@@ -102,6 +104,15 @@ namespace SecretHitler.App.Utility
         public void VoteSelected(bool vote)
         {
             _hubProxy.Invoke("VoteSelected", vote);
+        }
+
+        /// <summary>
+        /// Notify the server that one or more policies were selected.
+        /// </summary>
+        /// <param name="policies">Selected policies. Null/empty indicates a veto attempt.</param>
+        public void PoliciesSelected(IEnumerable<PolicyType> policies)
+        {
+            _hubProxy.Invoke("PoliciesSelected", policies);
         }
 
         /// <summary>

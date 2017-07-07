@@ -4,6 +4,7 @@ using Microsoft.AspNet.SignalR;
 using SecretHitler.Game.Enums;
 using SecretHitler.Game.Interfaces;
 using SecretHitler.Game.Entities;
+using SecretHitler.Game.Engine;
 
 namespace SecretHitler.Server
 {
@@ -59,12 +60,12 @@ namespace SecretHitler.Server
 
         public void GetPresidentialPolicies(Guid president, IEnumerable<PolicyType> drawnPolicies)
         {
-            throw new NotImplementedException();
+            GetUser(president).PolicySelectionRequested(drawnPolicies, Constants.PresidentialPolicyPassCount);
         }
 
         public void GetEnactedPolicy(Guid chancellor, IEnumerable<PolicyType> drawnPolicies)
         {
-            throw new NotImplementedException();
+            GetUser(chancellor).PolicySelectionRequested(drawnPolicies, Constants.ChancellorPolicySelectionCount);
         }
 
         public void PolicyPeek(Guid president, IList<PolicyType> deckTopThree)

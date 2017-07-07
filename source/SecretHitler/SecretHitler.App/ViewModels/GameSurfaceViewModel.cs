@@ -177,12 +177,20 @@ namespace SecretHitler.App.ViewModels
             }));
         }
 
-        public Task<IList<PolicyType>> SelectPolicies(IList<PolicyType> drawnPolicies, int allowedCount)
+        public Task<IList<PolicyType>> SelectPolicies(IEnumerable<PolicyType> drawnPolicies, int allowedCount)
         {
-            throw new NotImplementedException();
+            return Dispatch(async () =>
+            {
+                var vm = new PolicySelectionViewModel(drawnPolicies, allowedCount);
+                var consented = await ShowModalAsync(vm);
+                if (consented)
+                    return (IList<PolicyType>)vm.Policies.Where(_ => _.IsSelected).Select(_ => _.Item).ToList();
+                else
+                    return null;
+            });
         }
 
-        public void ShowPolicies(IList<PolicyType> deckTopThree)
+        public void ShowPolicies(IEnumerable<PolicyType> deckTopThree)
         {
             throw new NotImplementedException();
         }

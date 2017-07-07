@@ -1,5 +1,7 @@
-﻿using SecretHitler.Game.Interfaces;
+﻿using SecretHitler.Game.Enums;
+using SecretHitler.Game.Interfaces;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SecretHitler.App.Interfaces
@@ -41,5 +43,11 @@ namespace SecretHitler.App.Interfaces
         /// </summary>
         /// <param name="vote">True or false vote for ja or nein respectively.</param>
         void VoteSelected(bool vote);
+
+        /// <summary>
+        /// Notify the server that one or more policies were selected.
+        /// </summary>
+        /// <param name="policies">Selected policies. Null/empty indicates a veto attempt.</param>
+        void PoliciesSelected(IEnumerable<PolicyType> policies);
     }
 }

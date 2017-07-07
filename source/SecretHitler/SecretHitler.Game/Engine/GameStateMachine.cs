@@ -166,8 +166,8 @@ namespace SecretHitler.Game.Engine
             switch (MachineState)
             {
                 case StateMachineState.AwaitingEnactedPolicy:
-                    // TODO Validate policy was actually drawn
-                    if (myPolicies.Count != 1)
+                    // TODO Validate policy was actually drawn, delivered by correct player
+                    if (myPolicies.Count != Constants.ChancellorPolicySelectionCount)
                         throw new GameStateException("Too many policies selected for the current game state.");
 
                     var policy = myPolicies.First();
@@ -197,6 +197,14 @@ namespace SecretHitler.Game.Engine
 
                     break;
                 case StateMachineState.AwaitingPresidentialPolicies:
+                    // TODO Validate policy was actually drawn, delivered by correct player
+                    // TODO Test me.
+                    if (myPolicies.Count != Constants.PresidentialPolicyPassCount)
+                        throw new GameStateException("Too many/few policies selected for the current game state.");
+
+                    Director.Broadcast("The president has offered policies to the chancellor.");
+                    MachineState = StateMachineState.AwaitingEnactedPolicy;
+                    Director.GetEnactedPolicy(GameData.Chancellor, policies);
 
                     break;
                 default:
@@ -240,10 +248,11 @@ namespace SecretHitler.Game.Engine
                     {
                         Director.Broadcast($"{message} Due to inactive government, there is chaos on the streets!");
                         // TODO Policy win condition check.
+                        // TODO Update state. TEST ME!
                     }
                     else
                     {
-                        Director.Broadcast(message);
+                        Director.Broadcast($"{message} The election tracker is now at {GameData.ElectionTracker}. When it reaches {Constants.FailedElectionThreshold}, a policy will be enacted.");
                         PresidentialSuccession(true);
                     }
                 }

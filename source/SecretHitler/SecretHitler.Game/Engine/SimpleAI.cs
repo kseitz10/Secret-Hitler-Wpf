@@ -39,12 +39,12 @@ namespace SecretHitler.Game.Engine
             return PickRandom(candidates);
         }
 
-        public Task<IList<PolicyType>> SelectPolicies(IList<PolicyType> drawnPolicies, int allowedCount)
+        public Task<IList<PolicyType>> SelectPolicies(IEnumerable<PolicyType> drawnPolicies, int allowedCount)
         {
             return PickRandom(drawnPolicies, allowedCount);
         }
 
-        public void ShowPolicies(IList<PolicyType> deckTopThree)
+        public void ShowPolicies(IEnumerable<PolicyType> deckTopThree)
         {
             // Intentionally blank, but a good AI would do something with this information.
         }

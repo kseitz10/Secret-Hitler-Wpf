@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNet.SignalR;
 using SecretHitler.Game.Entities;
 using SecretHitler.Game.Engine;
+using SecretHitler.Game.Enums;
 
 namespace SecretHitler.Server
 {
@@ -32,6 +33,11 @@ namespace SecretHitler.Server
         public void VoteSelected(bool vote)
         {
             StateMachine.VoteCollected(vote);
+        }
+
+        public void PoliciesSelected(IEnumerable<PolicyType> policies)
+        {
+            StateMachine.PoliciesSelected(policies);
         }
 
         public override Task OnConnected()

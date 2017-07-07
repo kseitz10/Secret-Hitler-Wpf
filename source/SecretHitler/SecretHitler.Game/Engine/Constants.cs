@@ -8,5 +8,7 @@
         public const int MaxPlayerCount = 10;
         public const int FailedElectionThreshold = 3;
         public const int PresidentialPolicyDrawCount = 3;
+        public const int PresidentialPolicyPassCount = 2;
+        public const int ChancellorPolicySelectionCount = 1;
     }
 }
