@@ -52,6 +52,21 @@ namespace SecretHitler.App.ViewModels
         public IEnumerable<IPlayerInfo> Players => _gameData?.Players ?? new List<PlayerData>();
 
         /// <summary>
+        /// The number of enacted fascist policies.
+        /// </summary>
+        public int FascistPolicyCount => _gameData?.EnactedFascistPolicyCount ?? 0;
+
+        /// <summary>
+        /// The number of enacted liberal policies.
+        /// </summary>
+        public int LiberalPolicyCount => _gameData?.EnactedLiberalPolicyCount ?? 0;
+
+        /// <summary>
+        /// The count of players alive at the start of the game. This determines which fascist board is displayed.
+        /// </summary>
+        public int PlayerCount { get; private set; }
+
+        /// <summary>
         /// Gets the messages that have been received.
         /// </summary>
         public string Messages
@@ -130,8 +145,15 @@ namespace SecretHitler.App.ViewModels
                     return;
 
                 var oldRole = Me?.Role;
+                var oldGuid = _gameData?.GameGuid;
 
                 _gameData = gameData;
+
+                if (gameData.GameGuid != oldGuid)
+                {
+                    PlayerCount = Players.Count(_ => _.IsAlive);
+                    RaisePropertyChanged(nameof(PlayerCount));
+                }
 
                 if (Me.Role != oldRole)
                 {
@@ -142,6 +164,8 @@ namespace SecretHitler.App.ViewModels
 
                 RaisePropertyChanged(nameof(Players));
                 RaisePropertyChanged(nameof(Me));
+                RaisePropertyChanged(nameof(LiberalPolicyCount));
+                RaisePropertyChanged(nameof(FascistPolicyCount));
             });
         }
 

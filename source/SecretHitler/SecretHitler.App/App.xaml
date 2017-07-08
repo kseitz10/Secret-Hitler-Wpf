@@ -13,6 +13,11 @@
             <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
             <converters:NullToBooleanConverter x:Key="NullToTrueConverter" NullResult="True" />
             <converters:NullToBooleanConverter x:Key="NullToFalseConverter" NullResult="False" />
+            <converters:VisibleIfGreaterThanOrEqualConverter x:Key="VisibleIfGreaterThanOrEqualConverter" />
+
+            <Style TargetType="{x:Type TextBlock}">
+                <Setter Property="TextWrapping" Value="Wrap" />
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

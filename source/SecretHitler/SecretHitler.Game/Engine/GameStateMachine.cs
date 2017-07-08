@@ -118,7 +118,7 @@ namespace SecretHitler.Game.Engine
 
                 case StateMachineState.AwaitingPolicyPeekConfirmation:
                     Director.Broadcast("The president has seen the topmost policies on the draw pile.");
-                    PresidentialSuccession();
+                    PrepareNextElection();
                     break;
 
                 default:
@@ -144,7 +144,7 @@ namespace SecretHitler.Game.Engine
                     break;
 
                 case StateMachineState.AwaitingSpecialElectionPick:
-                    PresidentialSuccession(false, CoercePlayer(player));
+                    PrepareNextElection(specialElectionPresident: CoercePlayer(player));
                     break;
 
                 case StateMachineState.AwaitingExecution:
@@ -187,7 +187,7 @@ namespace SecretHitler.Game.Engine
                         // TODO Presidential power
                         // TODO Win condition check? Other stuff?
 
-                        PresidentialSuccession();
+                        PrepareNextElection();
                     }
                     else
                     {
@@ -249,11 +249,13 @@ namespace SecretHitler.Game.Engine
                         Director.Broadcast($"{message} Due to inactive government, there is chaos on the streets!");
                         // TODO Policy win condition check.
                         // TODO Update state. TEST ME!
+
+                        PrepareNextElection(false);
                     }
                     else
                     {
                         Director.Broadcast($"{message} The election tracker is now at {GameData.ElectionTracker}. When it reaches {Constants.FailedElectionThreshold}, a policy will be enacted.");
-                        PresidentialSuccession(true);
+                        PrepareNextElection(false);
                     }
                 }
 
@@ -309,14 +311,12 @@ namespace SecretHitler.Game.Engine
         private void PrepareGame()
         {
             GameDataManipulator.ResetGame();
-            PresidentialSuccession();
+            PrepareNextElection();
         }
 
-        private void PresidentialSuccession(bool failedElection = false, IPlayerInfo specialElectionPresident = null)
+        private void PrepareNextElection(bool updateTermLimits = true, IPlayerInfo specialElectionPresident = null)
         {
-            if (failedElection)
-                GameDataManipulator.UpdateElectionTracker();
-            else
+            if (updateTermLimits)
                 GameDataManipulator.UpdateTermLimits();
 
             GameData.Chancellor = null;
