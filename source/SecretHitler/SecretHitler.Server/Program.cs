@@ -14,8 +14,8 @@ namespace SecretHitler.Server
         /// <param name="args"></param>
         static void Main(string[] args)
         {
-            // TODO Make configurable.
-            ServerUrl = "http://127.0.0.1:8888";
+            // TODO Make configurable, handle running as admin problem.
+            ServerUrl = "http://*:8888";
             SignalR = WebApp.Start(ServerUrl);
             var proxy = Director.Instance;
 
