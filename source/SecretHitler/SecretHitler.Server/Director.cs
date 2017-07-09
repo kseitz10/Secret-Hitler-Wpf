@@ -68,14 +68,14 @@ namespace SecretHitler.Server
             GetUser(chancellor).PolicySelectionRequested(drawnPolicies, Constants.ChancellorPolicySelectionCount);
         }
 
-        public void PolicyPeek(Guid president, IList<PolicyType> deckTopThree)
+        public void PolicyPeek(Guid president, IEnumerable<PolicyType> deckTopThree)
         {
-            throw new NotImplementedException();
+            GetUser(president).PolicyPeek(deckTopThree);
         }
 
-        public void Reveal(Guid president, PlayerRole role)
+        public void Reveal(Guid president, Guid revealedGuid, PlayerRole role)
         {
-            throw new NotImplementedException();
+            GetUser(president).LoyaltyPeek(revealedGuid, role);
         }
 
         public void ApproveVeto(Guid president)

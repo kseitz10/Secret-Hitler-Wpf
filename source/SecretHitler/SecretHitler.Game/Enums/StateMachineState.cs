@@ -9,10 +9,10 @@ namespace SecretHitler.Game.Engine
         AwaitingVotes,
         AwaitingPresidentialPolicies,
         AwaitingEnactedPolicy,
-        AwaitingPolicyPeekConfirmation,
+        AwaitingSpecialPowerAcknowledgment,
         AwaitingVetoResponse,
-        AwaitingExecution,
-        AwaitingPolicyPeek,
+        AwaitingExecutionPick,
         AwaitingSpecialElectionPick,
+        AwaitingInvestigateLoyaltyPick,
     }
 }

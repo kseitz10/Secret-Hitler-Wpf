@@ -13,7 +13,9 @@ namespace SecretHitler.Game.Enums
         Voting,
         PresidentialPolicy,
         PolicyEnactment,
-        PresidentialPower,
+        InvestigateLoyalty,
+        SpecialElection,
+        Execution,
         FascistVictory,
         LiberalVictory
     }

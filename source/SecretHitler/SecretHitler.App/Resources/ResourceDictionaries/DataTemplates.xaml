@@ -4,6 +4,36 @@
                     xmlns:views="clr-namespace:SecretHitler.App.Views"
                     xmlns:enums="clr-namespace:SecretHitler.Game.Enums;assembly=SecretHitler.Game">
 
+    <DataTemplate DataType="{x:Type enums:PlayerRole}">
+        <Image x:Name="RoleImage" Stretch="UniformToFill" />
+        <DataTemplate.Triggers>
+            <Trigger Property="Content" Value="{x:Static enums:PlayerRole.Fascist}">
+                <Setter TargetName="RoleImage" Property="Source" Value="pack://application:,,,/Resources/Images/role_fascist.png" />
+            </Trigger>
+            <Trigger Property="Content" Value="{x:Static enums:PlayerRole.Hitler}">
+                <Setter TargetName="RoleImage" Property="Source" Value="pack://application:,,,/Resources/Images/role_hitler.png" />
+            </Trigger>
+            <Trigger Property="Content" Value="{x:Static enums:PlayerRole.Liberal}">
+                <Setter TargetName="RoleImage" Property="Source" Value="pack://application:,,,/Resources/Images/role_liberal.png" />
+            </Trigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <DataTemplate x:Key="LoyaltyTemplate" DataType="{x:Type enums:PlayerRole}">
+        <Image x:Name="RoleImage" />
+        <DataTemplate.Triggers>
+            <Trigger Property="Content" Value="{x:Static enums:PlayerRole.Fascist}">
+                <Setter TargetName="RoleImage" Property="Source" Value="pack://application:,,,/Resources/Images/party_fascist.png" />
+            </Trigger>
+            <Trigger Property="Content" Value="{x:Static enums:PlayerRole.Hitler}">
+                <Setter TargetName="RoleImage" Property="Source" Value="pack://application:,,,/Resources/Images/party_fascist.png" />
+            </Trigger>
+            <Trigger Property="Content" Value="{x:Static enums:PlayerRole.Liberal}">
+                <Setter TargetName="RoleImage" Property="Source" Value="pack://application:,,,/Resources/Images/party_liberal.png" />
+            </Trigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
     <DataTemplate DataType="{x:Type viewmodels:GameSurfaceViewModel}">
         <views:GameSurfaceView />
     </DataTemplate>
@@ -58,23 +88,21 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <StackPanel Margin="5">
-                            <CheckBox IsChecked="{Binding IsSelected}">
-                                <CheckBox.Template>
-                                    <ControlTemplate TargetType="{x:Type CheckBox}">
-                                        <Image x:Name="CardImage" Cursor="Hand" Source="pack://application:,,,/Resources/Images/article_liberal.png" />
-                                        <ControlTemplate.Triggers>
-                                            <DataTrigger Binding="{Binding Item}" Value="{x:Static enums:PolicyType.Fascist}">
-                                                <Setter TargetName="CardImage" Property="Source" Value="pack://application:,,,/Resources/Images/article_fascist.png" />
-                                            </DataTrigger>
-                                            <Trigger Property="IsChecked" Value="False">
-                                                <Setter TargetName="CardImage" Property="Opacity" Value="0.4" />
-                                            </Trigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </CheckBox.Template>
-                            </CheckBox>
-                        </StackPanel>
+                        <CheckBox IsChecked="{Binding IsSelected}" Margin="5">
+                            <CheckBox.Template>
+                                <ControlTemplate TargetType="{x:Type CheckBox}">
+                                    <Image x:Name="CardImage" Cursor="Hand" Source="pack://application:,,,/Resources/Images/article_liberal.png" />
+                                    <ControlTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding Item}" Value="{x:Static enums:PolicyType.Fascist}">
+                                            <Setter TargetName="CardImage" Property="Source" Value="pack://application:,,,/Resources/Images/article_fascist.png" />
+                                        </DataTrigger>
+                                        <Trigger Property="IsChecked" Value="False">
+                                            <Setter TargetName="CardImage" Property="Opacity" Value="0.4" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </CheckBox.Template>
+                        </CheckBox>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
@@ -83,6 +111,40 @@
                 <Button Content="Select" Command="{Binding AcceptCommand}" Margin="0,0,5,0" />
                 <Button Content="Veto (TODO)" IsEnabled="False" Command="{Binding CancelCommand}" Margin="5,0,0,0" />
             </UniformGrid>
+        </StackPanel>
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type viewmodels:PolicyDisplayViewModel}">
+        <StackPanel>
+            <TextBlock FontWeight="Bold" Text="These are the policies on the top of the draw pile." />
+
+            <ItemsControl ItemsSource="{Binding Policies}" HorizontalAlignment="Center" Margin="0,10">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Image x:Name="CardImage" Source="pack://application:,,,/Resources/Images/article_liberal.png" />
+                        <DataTemplate.Triggers>
+                            <Trigger Property="Content" Value="{x:Static enums:PolicyType.Fascist}">
+                                <Setter TargetName="CardImage" Property="Source" Value="pack://application:,,,/Resources/Images/article_fascist.png" />
+                            </Trigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <Button Content="Continue" Command="{Binding AcceptCommand}" Margin="0,10,0,0" />
+        </StackPanel>
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type viewmodels:LoyaltyDisplayViewModel}">
+        <StackPanel>
+            <TextBlock FontWeight="Bold" Text="{Binding Name}" HorizontalAlignment="Center" />
+            <ContentPresenter Content="{Binding Role}" ContentTemplate="{StaticResource LoyaltyTemplate}" HorizontalAlignment="Center" Margin="0,10,0,0" Width="200" />
+            <Button Content="Continue" Command="{Binding AcceptCommand}" Margin="0,10,0,0" />
         </StackPanel>
     </DataTemplate>
 

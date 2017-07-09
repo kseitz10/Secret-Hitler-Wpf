@@ -67,20 +67,35 @@ namespace SecretHitler.Game.Tests.Engine
         }
 
         [TestMethod]
+        public void PeekingGetsCorrectCardsTest()
+        {
+            var peek = PolicyDeck.Peek(PolicyDeck.DrawPileCount);
+            var actualDraw = PolicyDeck.Draw(PolicyDeck.DrawPileCount);
+            Assert.IsTrue(actualDraw.SequenceEqual(peek), "Peeking should give the same cards as drawing.");
+        }
+
+        [TestMethod]
         public void PolicyDeckIsShuffledWhenDrawPileEmptyTest()
         {
-            var firstDraw = PolicyDeck.Draw(PolicyDeck.DrawPileCount);
-            var secondDraw = PolicyDeck.Draw(PolicyDeck.DrawPileCount);
-            Assert.IsFalse(firstDraw.SequenceEqual(secondDraw));
+            var expectedCount = PolicyDeck.DrawPileCount;
+            var firstDraw = PolicyDeck.Draw(expectedCount);
+            PolicyDeck.Discard(firstDraw);
+            var secondDraw = PolicyDeck.Draw(expectedCount);
+            Assert.AreEqual(expectedCount, secondDraw.Count, "Did not draw the same number of cards both times.");
+            Assert.IsFalse(firstDraw.SequenceEqual(secondDraw), "Cards should be in different order.");
+            Assert.AreEqual(0, PolicyDeck.DiscardPileCount, "Discard pile should be empty.");
         }
 
         [TestMethod]
         public void PolicyDeckIsShuffledWhenResetTest()
         {
+            var expectedCount = PolicyDeck.DrawPileCount;
             var firstDraw = PolicyDeck.Peek(PolicyDeck.DrawPileCount);
             PolicyDeck.Reset();
             var secondDraw = PolicyDeck.Draw(PolicyDeck.DrawPileCount);
-            Assert.IsFalse(firstDraw.SequenceEqual(secondDraw));
+            Assert.AreEqual(expectedCount, secondDraw.Count, "Did not draw the same number of cards both times.");
+            Assert.IsFalse(firstDraw.SequenceEqual(secondDraw), "Cards should be in different order.");
+            Assert.AreEqual(0, PolicyDeck.DiscardPileCount, "Discard pile should be empty.");
         }
 
         [TestMethod]
@@ -89,11 +104,13 @@ namespace SecretHitler.Game.Tests.Engine
             var firstDraw = PolicyDeck.Peek(Int32.MaxValue);
             PolicyDeck.Shuffle();
             var secondDraw = PolicyDeck.Peek(Int32.MaxValue);
-            Assert.IsFalse(firstDraw.SequenceEqual(secondDraw));
+            Assert.AreEqual(firstDraw.Count, secondDraw.Count, "Did not draw the same number of cards both times.");
+            Assert.IsFalse(firstDraw.SequenceEqual(secondDraw), "Cards should be in different order.");
+            Assert.AreEqual(0, PolicyDeck.DiscardPileCount, "Discard pile should be empty.");
         }
 
         [TestMethod]
-        public void PolicyDeckDrawPileIsRefilledWhenInsufficientTest()
+        public void PolicyDeckDrawPileIsRefilledWhenInsufficientForDrawingTest()
         {
             var totalDeckSize = Constants.TotalFascistPolicies + Constants.TotalLiberalPolicies;
             PolicyDeck.Discard(PolicyDeck.Draw(PolicyDeck.DrawPileCount - 2));
@@ -101,6 +118,27 @@ namespace SecretHitler.Game.Tests.Engine
             Assert.AreEqual(totalDeckSize - 2, PolicyDeck.DiscardPileCount, "Should have discarded all drawn cards.");
             PolicyDeck.Draw(3);
             Assert.AreEqual(totalDeckSize - 3, PolicyDeck.DrawPileCount, "Should have drawn 3 cards.");
+        }
+
+        [TestMethod]
+        public void PolicyDeckDrawPileIsRefilledWhenCompletelyEmptyTest()
+        {
+            var totalDeckSize = Constants.TotalFascistPolicies + Constants.TotalLiberalPolicies;
+            PolicyDeck.Discard(PolicyDeck.Draw(PolicyDeck.DrawPileCount));
+            Assert.AreEqual(0, PolicyDeck.DrawPileCount, "Deck should have 0 cards left after drawing all cards.");
+            Assert.AreEqual(totalDeckSize, PolicyDeck.DiscardPileCount, "Should have discarded all drawn cards.");
+            PolicyDeck.Draw(3);
+            Assert.AreEqual(totalDeckSize - 3, PolicyDeck.DrawPileCount, "Should have drawn 3 cards.");
+        }
+
+        [TestMethod]
+        public void PolicyDeckDrawPileIsRefilledWhenInsufficientForPeekingTest()
+        {
+            var totalDeckSize = Constants.TotalFascistPolicies + Constants.TotalLiberalPolicies;
+            PolicyDeck.Discard(PolicyDeck.Draw(PolicyDeck.DrawPileCount - 2));
+            Assert.AreEqual(2, PolicyDeck.DrawPileCount, "Deck should have 2 cards left after drawing all but 2 cards.");
+            Assert.AreEqual(totalDeckSize - 2, PolicyDeck.DiscardPileCount, "Should have discarded all drawn cards.");
+            Assert.AreEqual(3, PolicyDeck.Peek(3).Count, "Should have peeked on 3 cards.");
         }
 
         [TestMethod]

@@ -64,6 +64,16 @@ namespace SecretHitler.App.Utility
             _hubProxy.On("PlayerVoteRequested", async () => VoteSelected(await ClientUI?.GetVote()));
             _hubProxy.On<IEnumerable<PolicyType>, int>("PolicySelectionRequested", async (policies, ct) =>
                 PoliciesSelected(await ClientUI?.SelectPolicies(policies, ct)));
+            _hubProxy.On<IEnumerable<PolicyType>>("PolicyPeek", async (policies) =>
+            {
+                await ClientUI?.ShowPolicies(policies);
+                Acknowledge(null);
+            });
+            _hubProxy.On<Guid, PlayerRole>("LoyaltyPeek", async (guid, loyalty) =>
+            {
+                await ClientUI?.RevealLoyalty(guid, loyalty);
+                Acknowledge(null);
+            });
 
             try
             {
@@ -113,6 +123,15 @@ namespace SecretHitler.App.Utility
         public void PoliciesSelected(IEnumerable<PolicyType> policies)
         {
             _hubProxy.Invoke("PoliciesSelected", policies);
+        }
+
+        /// <summary>
+        /// Indicates a simple acknowledgement from a client.
+        /// </summary>
+        /// <param name="acknowledge">Favorable or unfavorable response, or null if not applicable.</param>
+        public void Acknowledge(bool? acknowledge)
+        {
+            _hubProxy.Invoke("Acknowledge", acknowledge);
         }
 
         /// <summary>

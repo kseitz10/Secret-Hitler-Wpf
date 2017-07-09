@@ -65,6 +65,7 @@ namespace SecretHitler.Game.Engine
         public void Shuffle()
         {
             _policyDeck.AddRange(_discardDeck);
+            _discardDeck.Clear();
             _policyDeck.Shuffle();
         }
 

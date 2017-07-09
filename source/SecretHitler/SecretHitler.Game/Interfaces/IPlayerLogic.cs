@@ -22,9 +22,9 @@ namespace SecretHitler.Game.Interfaces
 
         Task<IList<PolicyType>> SelectPolicies(IEnumerable<PolicyType> drawnPolicies, int allowedCount);
 
-        void ShowPolicies(IEnumerable<PolicyType> deckTopThree);
+        Task ShowPolicies(IEnumerable<PolicyType> deckTopThree);
 
-        void RevealLoyalty(PlayerRole role);
+        Task RevealLoyalty(Guid playerGuid, PlayerRole role);
 
         Task<bool> PromptForVetoApproval();
     }

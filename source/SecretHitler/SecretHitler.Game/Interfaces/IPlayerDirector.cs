@@ -24,9 +24,9 @@ namespace SecretHitler.Game.Interfaces
 
         void GetEnactedPolicy(Guid chancellor, IEnumerable<PolicyType> drawnPolicies);
 
-        void PolicyPeek(Guid president, IList<PolicyType> deckTopThree);
+        void PolicyPeek(Guid president, IEnumerable<PolicyType> deckTopThree);
 
-        void Reveal(Guid president, PlayerRole role);
+        void Reveal(Guid president, Guid revealedGuid, PlayerRole role);
 
         void ApproveVeto(Guid president);
     }

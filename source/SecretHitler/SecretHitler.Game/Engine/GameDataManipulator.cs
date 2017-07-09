@@ -60,6 +60,7 @@ namespace SecretHitler.Game.Engine
             Game.EnactedFascistPolicyCount = 0;
             Game.EnactedLiberalPolicyCount = 0;
             Game.ElectionTracker = 0;
+            Game.GameGuid = Guid.NewGuid();
 
             new PolicyDeck(Game.DrawPile, Game.DiscardPile, true);
         }
@@ -96,11 +97,15 @@ namespace SecretHitler.Game.Engine
         /// </summary>
         public virtual PlayerData GetPresidentFromQueue()
         {
-            var nextPresidentGuid = Game.PresidentialQueue.Dequeue();
-            Game.PresidentialQueue.Enqueue(nextPresidentGuid);
+            do
+            {
+                var nextPresidentGuid = Game.PresidentialQueue.Dequeue();
+                Game.PresidentialQueue.Enqueue(nextPresidentGuid);
 
-            var nextPresident = Game.Players.First(_ => _.Identifier == nextPresidentGuid);
-            Game.President = nextPresident;
+                var nextPresident = Game.Players.First(_ => _.Identifier == nextPresidentGuid);
+                Game.President = nextPresident;
+            }
+            while (!Game.President.IsAlive);
 
             return Game.President;
         }

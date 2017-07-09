@@ -29,9 +29,10 @@ namespace SecretHitler.Game.Engine
             return Task.FromResult(true);
         }
 
-        public void RevealLoyalty(PlayerRole role)
+        public Task RevealLoyalty(Guid playerGuid, PlayerRole role)
         {
             // Intentionally blank, but a good AI would do something with this information.
+            return Task.CompletedTask;
         }
 
         public Task<Guid> SelectPlayer(GameState gameState, IEnumerable<Guid> candidates)
@@ -44,9 +45,10 @@ namespace SecretHitler.Game.Engine
             return PickRandom(drawnPolicies, allowedCount);
         }
 
-        public void ShowPolicies(IEnumerable<PolicyType> deckTopThree)
+        public Task ShowPolicies(IEnumerable<PolicyType> deckTopThree)
         {
             // Intentionally blank, but a good AI would do something with this information.
+            return Task.CompletedTask;
         }
 
         public void UpdateGameData(GameData gameData)

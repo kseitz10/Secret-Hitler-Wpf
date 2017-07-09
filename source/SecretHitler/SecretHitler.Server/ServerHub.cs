@@ -17,6 +17,8 @@ namespace SecretHitler.Server
 
         public static List<PlayerData> Players => StateMachine.GameData.Players;
 
+        private static object _lock = new object();
+
         #endregion
 
         public void BroadcastMessage(string message)
@@ -40,35 +42,43 @@ namespace SecretHitler.Server
             StateMachine.PoliciesSelected(policies);
         }
 
+        public void Acknowledge(bool? result)
+        {
+            StateMachine.Acknowledge(result);
+        }
+
         public override Task OnConnected()
         {
-            var nickname = Context.QueryString["nickname"];
-            if (!Guid.TryParse(Context.QueryString["guid"], out Guid guid))
-                throw new ArgumentException("Guid required");
-
-            var signalrConnectionId = Context.ConnectionId;
-            var existingPlayer = Players.SingleOrDefault(_ => _.Identifier == guid);
-            if (existingPlayer != null)
+            lock (_lock)
             {
-                Groups.Add(signalrConnectionId, guid.ToString());
-                BroadcastMessageImpl($"Client {nickname} has rejoined.");
-            }
-            else
-            {
-                // TODO Creating the player is not the responsibility of this object.
-                var player = new PlayerData() { Name = nickname, Identifier = guid };
-                StateMachine.GameData.Players.Add(player);
-                Groups.Add(signalrConnectionId, guid.ToString());
+                var nickname = Context.QueryString["nickname"];
+                if (!Guid.TryParse(Context.QueryString["guid"], out Guid guid))
+                    throw new ArgumentException("Guid required");
 
-                // Add a short delay. Uggh.
-                Task.Run(async () =>
+                var signalrConnectionId = Context.ConnectionId;
+                var existingPlayer = Players.SingleOrDefault(_ => _.Identifier == guid);
+                if (existingPlayer != null)
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(1));
-                    BroadcastMessageImpl($"Client {nickname} connected.");
+                    Groups.Add(signalrConnectionId, guid.ToString());
+                    BroadcastMessageImpl($"Client {nickname} has rejoined.");
+                }
+                else
+                {
+                    // TODO Creating the player is not the responsibility of this object.
+                    var player = new PlayerData() { Name = nickname, Identifier = guid };
+                    StateMachine.GameData.Players.Add(player);
+                    Groups.Add(signalrConnectionId, guid.ToString());
 
-                    if (StateMachine.MachineState != StateMachineState.None)
-                        StateMachine.DisseminateGameData();
-                });
+                    // Add a short delay. Uggh.
+                    Task.Run(async () =>
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(1));
+                        BroadcastMessageImpl($"Client {nickname} connected.");
+
+                        if (StateMachine.MachineState != StateMachineState.None)
+                            StateMachine.DisseminateGameData();
+                    });
+                }
             }
 
             return base.OnConnected();

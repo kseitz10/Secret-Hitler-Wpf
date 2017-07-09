@@ -49,5 +49,11 @@ namespace SecretHitler.App.Interfaces
         /// </summary>
         /// <param name="policies">Selected policies. Null/empty indicates a veto attempt.</param>
         void PoliciesSelected(IEnumerable<PolicyType> policies);
+
+        /// <summary>
+        /// Indicates a simple acknowledgement from a client.
+        /// </summary>
+        /// <param name="acknowledge">Favorable or unfavorable response, or null if not applicable.</param>
+        void Acknowledge(bool? acknowledge);
     }
 }

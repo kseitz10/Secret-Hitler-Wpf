@@ -10,5 +10,8 @@
         public const int PresidentialPolicyDrawCount = 3;
         public const int PresidentialPolicyPassCount = 2;
         public const int ChancellorPolicySelectionCount = 1;
+        public const int FascistPoliciesRequiredForVictory = 6;
+        public const int LiberalPoliciesRequiredForVictory = 5;
+        public const int RequiredFascistPoliciesForHitlerChancellorshipVictory = 3;
     }
 }

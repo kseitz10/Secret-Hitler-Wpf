@@ -6,11 +6,9 @@ using System.Collections.Generic;
 using SecretHitler.Game.Enums;
 using SecretHitler.Game.Interfaces;
 using System.Threading.Tasks;
-using System.Windows.Threading;
 using System.Windows;
 using SecretHitler.Game.Entities;
 using System.Linq;
-using SecretHitler.Game.Utility;
 
 namespace SecretHitler.App.ViewModels
 {
@@ -184,6 +182,15 @@ namespace SecretHitler.App.ViewModels
                     case GameState.ChancellorNomination:
                         selectionVm.Prompt = "Please select your desired chancellor.";
                         break;
+                    case GameState.Execution:
+                        selectionVm.Prompt = "Please a player to execute.";
+                        break;
+                    case GameState.InvestigateLoyalty:
+                        selectionVm.Prompt = "Please select a player to see their loyalty card.";
+                        break;
+                    case GameState.SpecialElection:
+                        selectionVm.Prompt = "Please select a player to serve as president in a special election.";
+                        break;
                 }
 
                 selectionVm.Players = _gameData.Players.Join(candidates, p => p.Identifier, c => c, (p, g) => p).Cast<IPlayerInfo>().ToList();
@@ -214,14 +221,14 @@ namespace SecretHitler.App.ViewModels
             });
         }
 
-        public void ShowPolicies(IEnumerable<PolicyType> deckTopThree)
+        public Task ShowPolicies(IEnumerable<PolicyType> deckTopThree)
         {
-            throw new NotImplementedException();
+            return Dispatch(async () => await ShowModalAsync(new PolicyDisplayViewModel(deckTopThree)));
         }
 
-        public void RevealLoyalty(PlayerRole role)
+        public Task RevealLoyalty(Guid playerGuid, PlayerRole role)
         {
-            throw new NotImplementedException();
+            return Dispatch(async () => await ShowModalAsync(new LoyaltyDisplayViewModel(_gameData.Players.First(_ => _ == playerGuid), role)));
         }
 
         public Task<bool> PromptForVetoApproval()
