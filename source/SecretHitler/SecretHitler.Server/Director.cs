@@ -60,12 +60,12 @@ namespace SecretHitler.Server
 
         public void GetPresidentialPolicies(Guid president, IEnumerable<PolicyType> drawnPolicies)
         {
-            GetUser(president).PolicySelectionRequested(drawnPolicies, Constants.PresidentialPolicyPassCount);
+            GetUser(president).PolicySelectionRequested(drawnPolicies, Constants.PresidentialPolicyPassCount, false);
         }
 
-        public void GetEnactedPolicy(Guid chancellor, IEnumerable<PolicyType> drawnPolicies)
+        public void GetEnactedPolicy(Guid chancellor, IEnumerable<PolicyType> drawnPolicies, bool allowVeto)
         {
-            GetUser(chancellor).PolicySelectionRequested(drawnPolicies, Constants.ChancellorPolicySelectionCount);
+            GetUser(chancellor).PolicySelectionRequested(drawnPolicies, Constants.ChancellorPolicySelectionCount, allowVeto);
         }
 
         public void PolicyPeek(Guid president, IEnumerable<PolicyType> deckTopThree)
@@ -80,7 +80,7 @@ namespace SecretHitler.Server
 
         public void ApproveVeto(Guid president)
         {
-            throw new NotImplementedException();
+            GetUser(president).ApproveVetoRequested();
         }
 
         private dynamic GetUser(Guid guid)

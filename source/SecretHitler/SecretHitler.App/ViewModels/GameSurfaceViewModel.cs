@@ -208,16 +208,16 @@ namespace SecretHitler.App.ViewModels
             }));
         }
 
-        public Task<IList<PolicyType>> SelectPolicies(IEnumerable<PolicyType> drawnPolicies, int allowedCount)
+        public Task<IList<PolicyType>> SelectPolicies(IEnumerable<PolicyType> drawnPolicies, int allowedCount, bool allowVeto)
         {
             return Dispatch(async () =>
             {
-                var vm = new PolicySelectionViewModel(drawnPolicies, allowedCount);
+                var vm = new PolicySelectionViewModel(drawnPolicies, allowedCount, allowVeto);
                 var consented = await ShowModalAsync(vm);
                 if (consented)
                     return (IList<PolicyType>)vm.Policies.Where(_ => _.IsSelected).Select(_ => _.Item).ToList();
                 else
-                    return null;
+                    return new[] { PolicyType.None };
             });
         }
 
@@ -233,7 +233,12 @@ namespace SecretHitler.App.ViewModels
 
         public Task<bool> PromptForVetoApproval()
         {
-            throw new NotImplementedException();
+            return Dispatch(async () => await ShowModalAsync(
+                new GeneralPromptViewModel("The chancellor wants to veto the provided policies.")
+                {
+                    AcceptText = "Allow Veto",
+                    CancelText = "Deny Veto"
+                }));
         }
 
         #endregion

@@ -22,7 +22,7 @@ namespace SecretHitler.Game.Interfaces
 
         void GetPresidentialPolicies(Guid president, IEnumerable<PolicyType> drawnPolicies);
 
-        void GetEnactedPolicy(Guid chancellor, IEnumerable<PolicyType> drawnPolicies);
+        void GetEnactedPolicy(Guid chancellor, IEnumerable<PolicyType> drawnPolicies, bool allowVeto);
 
         void PolicyPeek(Guid president, IEnumerable<PolicyType> deckTopThree);
 

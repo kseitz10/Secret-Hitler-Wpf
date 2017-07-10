@@ -40,7 +40,7 @@ namespace SecretHitler.Game.Engine
             return PickRandom(candidates);
         }
 
-        public Task<IList<PolicyType>> SelectPolicies(IEnumerable<PolicyType> drawnPolicies, int allowedCount)
+        public Task<IList<PolicyType>> SelectPolicies(IEnumerable<PolicyType> drawnPolicies, int allowedCount, bool allowVeto)
         {
             return PickRandom(drawnPolicies, allowedCount);
         }

@@ -26,13 +26,29 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
         [TestMethod]
         public void VetoPowerIsUnavailableWithFewerThanFiveFascistPolicies()
         {
-            Assert.Inconclusive();
+            var president = Players.First();
+            president.IsPresident = true;
+            var chancellor = Players.Skip(1).First();
+            chancellor.IsChancellor = true;
+
+            StateMachine.MachineState = StateMachineState.AwaitingPresidentialPolicies;
+            GameData.EnactedFascistPolicyCount = Constants.MinFascistPolicyCountForVeto - 1;
+            StateMachine.PoliciesSelected(new[] { PolicyType.Fascist, PolicyType.Liberal });
+            Director.Verify(_ => _.GetEnactedPolicy(chancellor, It.IsAny<IEnumerable<PolicyType>>(), false));
         }
 
         [TestMethod]
         public void VetoPowerIsAvailableWithFiveFascistPolicies()
         {
-            Assert.Inconclusive();
+            var president = Players.First();
+            president.IsPresident = true;
+            var chancellor = Players.Skip(1).First();
+            chancellor.IsChancellor = true;
+
+            StateMachine.MachineState = StateMachineState.AwaitingPresidentialPolicies;
+            GameData.EnactedFascistPolicyCount = Constants.MinFascistPolicyCountForVeto;
+            StateMachine.PoliciesSelected(new[] { PolicyType.Fascist, PolicyType.Liberal });
+            Director.Verify(_ => _.GetEnactedPolicy(chancellor, It.IsAny<IEnumerable<PolicyType>>(), true));
         }
 
         [TestMethod]

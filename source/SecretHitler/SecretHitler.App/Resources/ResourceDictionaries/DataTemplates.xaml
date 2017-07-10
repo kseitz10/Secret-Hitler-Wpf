@@ -49,7 +49,7 @@
                      DisplayMemberPath="Name"
                      ItemsSource="{Binding Players}"
                      SelectedItem="{Binding SelectedPlayer}" />
-            <Button Content="Choose" Command="{Binding AcceptCommand}" />
+            <Button Content="Continue" Command="{Binding AcceptCommand}" />
         </StackPanel>
     </DataTemplate>
 
@@ -108,8 +108,8 @@
             </ItemsControl>
 
             <UniformGrid Columns="2" Margin="0,10,0,0">
-                <Button Content="Select" Command="{Binding AcceptCommand}" Margin="0,0,5,0" />
-                <Button Content="Veto (TODO)" IsEnabled="False" Command="{Binding CancelCommand}" Margin="5,0,0,0" />
+                <Button Content="Continue" Command="{Binding AcceptCommand}" Margin="0,0,5,0" />
+                <Button Content="Request Veto" Command="{Binding CancelCommand}" Margin="5,0,0,0" />
             </UniformGrid>
         </StackPanel>
     </DataTemplate>
@@ -145,6 +145,17 @@
             <TextBlock FontWeight="Bold" Text="{Binding Name}" HorizontalAlignment="Center" />
             <ContentPresenter Content="{Binding Role}" ContentTemplate="{StaticResource LoyaltyTemplate}" HorizontalAlignment="Center" Margin="0,10,0,0" Width="200" />
             <Button Content="Continue" Command="{Binding AcceptCommand}" Margin="0,10,0,0" />
+        </StackPanel>
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type viewmodels:GeneralPromptViewModel}">
+        <StackPanel>
+            <TextBlock Text="{Binding Prompt}" FontWeight="Bold" />
+
+            <UniformGrid Columns="2" Margin="0,10,0,0">
+                <Button Content="{Binding AcceptText}" Command="{Binding AcceptCommand}" Margin="0,0,5,0" />
+                <Button Content="{Binding CancelText}" Command="{Binding CancelCommand}" Margin="5,0,0,0" />
+            </UniformGrid>
         </StackPanel>
     </DataTemplate>
 

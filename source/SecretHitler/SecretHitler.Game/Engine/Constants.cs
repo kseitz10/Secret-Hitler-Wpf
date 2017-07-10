@@ -13,5 +13,6 @@
         public const int FascistPoliciesRequiredForVictory = 6;
         public const int LiberalPoliciesRequiredForVictory = 5;
         public const int RequiredFascistPoliciesForHitlerChancellorshipVictory = 3;
+        public const int MinFascistPolicyCountForVeto = 5;
     }
 }

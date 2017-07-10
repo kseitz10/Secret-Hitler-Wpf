@@ -62,8 +62,8 @@ namespace SecretHitler.App.Utility
             _hubProxy.On<GameState, IEnumerable<Guid>>("PlayerSelectionRequested", async (state, players) =>
                 PlayerSelected(await ClientUI?.SelectPlayer(state, players)));
             _hubProxy.On("PlayerVoteRequested", async () => VoteSelected(await ClientUI?.GetVote()));
-            _hubProxy.On<IEnumerable<PolicyType>, int>("PolicySelectionRequested", async (policies, ct) =>
-                PoliciesSelected(await ClientUI?.SelectPolicies(policies, ct)));
+            _hubProxy.On<IEnumerable<PolicyType>, int, bool>("PolicySelectionRequested", async (policies, ct, veto) =>
+                PoliciesSelected(await ClientUI?.SelectPolicies(policies, ct, veto)));
             _hubProxy.On<IEnumerable<PolicyType>>("PolicyPeek", async (policies) =>
             {
                 await ClientUI?.ShowPolicies(policies);
@@ -74,6 +74,8 @@ namespace SecretHitler.App.Utility
                 await ClientUI?.RevealLoyalty(guid, loyalty);
                 Acknowledge(null);
             });
+            _hubProxy.On("ApproveVetoRequested", async () =>
+                Acknowledge(await ClientUI?.PromptForVetoApproval()));
 
             try
             {

@@ -68,6 +68,10 @@ namespace SecretHitler.Game.Engine
         /// </summary>
         internal int NeinVoteCount { get; set; }
 
+        /// Whether or not vetoes are allowed.
+        /// </summary>
+        internal bool AllowVetoes => GameData.EnactedFascistPolicyCount >= Constants.MinFascistPolicyCountForVeto;
+
         /// <summary>
         /// The last policies drawn from the deck. This accommodates discarding cards when getting a response
         /// from the player.
@@ -120,8 +124,10 @@ namespace SecretHitler.Game.Engine
                     }
                     else
                     {
-                        // TODO Implement and test
+                        // TODO test
                         Director.Broadcast("Unsuccessful veto. The chancellor must choose a policy.");
+                        MachineState = StateMachineState.AwaitingEnactedPolicy;
+                        Director.GetEnactedPolicy(GameData.Chancellor, DrawnPolicies, false);
                     }
 
                     break;
@@ -190,16 +196,22 @@ namespace SecretHitler.Game.Engine
                         throw new GameStateException("Too many policies selected for the current game state.");
 
                     var policy = myPolicies.First();
-
-                    // Discard if a policy was selected.
-                    if(policy != PolicyType.None)
+                    if (policy == PolicyType.None)
                     {
-                        foreach (var p in myPolicies)
-                            DrawnPolicies.Remove(p);
+                        if (!AllowVetoes)
+                            throw new GameStateException("Currently not eligible to veto policies.");
 
-                        PolicyDeck.Discard(DrawnPolicies);
-                        DrawnPolicies = null;
+                        Director.Broadcast("A veto has been requested.");
+                        MachineState = StateMachineState.AwaitingVetoResponse;
+                        Director.ApproveVeto(GameData.President);
+                        return;
                     }
+
+                    foreach (var p in myPolicies)
+                        DrawnPolicies.Remove(p);
+
+                    PolicyDeck.Discard(DrawnPolicies);
+                    DrawnPolicies = null;
 
                     if (policy == PolicyType.Fascist)
                     {
@@ -216,17 +228,9 @@ namespace SecretHitler.Game.Engine
                         GameData.EnactedLiberalPolicyCount++;
                     }
 
-                    if (policy != PolicyType.None)
-                    {
-                        PrepareNextElection();
-                    }
-                    else
-                    {
-                        Director.Broadcast("A veto has been requested.");
-                        // TODO Veto and dissemination
-                    }
-
+                    PrepareNextElection();
                     break;
+
                 case StateMachineState.AwaitingPresidentialPolicies:
                     // TODO Validate policy was actually drawn, delivered by correct player
                     // TODO Test me.
@@ -241,9 +245,9 @@ namespace SecretHitler.Game.Engine
 
                     Director.Broadcast("The president has offered policies to the chancellor.");
                     MachineState = StateMachineState.AwaitingEnactedPolicy;
-                    Director.GetEnactedPolicy(GameData.Chancellor, policies);
-
+                    Director.GetEnactedPolicy(GameData.Chancellor, policies, AllowVetoes);
                     break;
+
                 default:
                     throw new GameStateException($"{nameof(PoliciesSelected)} called for invalid state {MachineState}.");
             }
@@ -402,13 +406,13 @@ namespace SecretHitler.Game.Engine
             if (chaos)
             {
                 Director.Broadcast($"{messagePrefix} Due to inactive government, there is chaos on the streets!".Trim());
-                PrepareNextElection(false);
             }
             else
             {
                 Director.Broadcast($"{messagePrefix} The election tracker is now at {GameData.ElectionTracker}. When it reaches {Constants.FailedElectionThreshold}, a policy will be enacted.".Trim());
-                PrepareNextElection(false);
             }
+
+            PrepareNextElection(false);
         }
 
         /// <summary>
