@@ -30,7 +30,7 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
             president.IsPresident = true;
             var chancellor = Players.Skip(1).First();
             chancellor.IsChancellor = true;
-
+            StateMachine.DrawnPolicies = new List<PolicyType>() { PolicyType.Fascist, PolicyType.Fascist };
             StateMachine.MachineState = StateMachineState.AwaitingPresidentialPolicies;
             GameData.EnactedFascistPolicyCount = Constants.MinFascistPolicyCountForVeto - 1;
             StateMachine.PoliciesSelected(new[] { PolicyType.Fascist, PolicyType.Liberal });
@@ -44,7 +44,7 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
             president.IsPresident = true;
             var chancellor = Players.Skip(1).First();
             chancellor.IsChancellor = true;
-
+            StateMachine.DrawnPolicies = new List<PolicyType>() { PolicyType.Fascist, PolicyType.Fascist };
             StateMachine.MachineState = StateMachineState.AwaitingPresidentialPolicies;
             GameData.EnactedFascistPolicyCount = Constants.MinFascistPolicyCountForVeto;
             StateMachine.PoliciesSelected(new[] { PolicyType.Fascist, PolicyType.Liberal });

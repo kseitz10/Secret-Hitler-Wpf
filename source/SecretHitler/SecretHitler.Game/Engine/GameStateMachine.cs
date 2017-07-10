@@ -76,7 +76,7 @@ namespace SecretHitler.Game.Engine
         /// The last policies drawn from the deck. This accommodates discarding cards when getting a response
         /// from the player.
         /// </summary>
-        private List<PolicyType> DrawnPolicies { get; set; }
+        internal List<PolicyType> DrawnPolicies { get; set; }
 
         #endregion
 
