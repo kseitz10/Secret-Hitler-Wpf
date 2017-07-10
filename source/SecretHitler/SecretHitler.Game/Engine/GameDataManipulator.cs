@@ -55,6 +55,7 @@ namespace SecretHitler.Game.Engine
             var shuffled = Game.Players.Select(_ => _.Identifier).ToList();
             shuffled.Shuffle();
             Game.PresidentialQueue = new Queue<Guid>(shuffled);
+            Game.Players = Game.PresidentialQueue.Join(Game.Players, _ => _, _ => _.Identifier, (o, i) => i).ToList();
 
             Game.IneligibleChancellors = new List<Guid>();
             Game.EnactedFascistPolicyCount = 0;

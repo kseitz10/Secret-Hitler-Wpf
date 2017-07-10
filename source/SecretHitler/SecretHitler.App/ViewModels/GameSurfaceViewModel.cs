@@ -142,7 +142,6 @@ namespace SecretHitler.App.ViewModels
                 if (gameData == null)
                     return;
 
-                var oldRole = Me?.Role;
                 var oldGuid = _gameData?.GameGuid;
 
                 _gameData = gameData;
@@ -151,13 +150,6 @@ namespace SecretHitler.App.ViewModels
                 {
                     PlayerCount = Players.Count(_ => _.IsAlive);
                     RaisePropertyChanged(nameof(PlayerCount));
-                }
-
-                if (Me.Role != oldRole)
-                {
-                    MessageReceived("Your role in this game is: " + Me.Role);
-                    MessageReceived("The new presidential rotation is as follows: " +
-                        string.Join(", ", gameData.PresidentialQueue.Select(guid => gameData.Players.First(p => p.Identifier == guid).Name)));
                 }
 
                 RaisePropertyChanged(nameof(Players));
