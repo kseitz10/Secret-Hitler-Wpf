@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.CommandWpf;
 using SecretHitler.App.Utility;
+using System.Windows;
 
 namespace SecretHitler.App.ViewModels
 {
@@ -31,6 +32,7 @@ namespace SecretHitler.App.ViewModels
         private string _nickname;
         private bool _isHost;
         private bool _rememberMe;
+        private bool _isBusy;
 
         /// <summary>
         /// The hostname or IP of the server being connected to. If hosting a local server, this is ignored.
@@ -86,7 +88,7 @@ namespace SecretHitler.App.ViewModels
                 RaisePropertyChanged();
             }
         }
-        
+
         /// <summary>
         /// Start a server
         /// </summary>
@@ -96,6 +98,19 @@ namespace SecretHitler.App.ViewModels
             set
             {
                 _isHost = value;
+                RaisePropertyChanged();
+            }
+        }
+        
+        /// <summary>
+        /// Whether or not is busy connecting.
+        /// </summary>
+        public bool IsBusy
+        {
+            get => _isBusy;
+            set
+            {
+                _isBusy = value;
                 RaisePropertyChanged();
             }
         }
@@ -133,11 +148,24 @@ namespace SecretHitler.App.ViewModels
             }
 
             var client = new Client($"http://{Hostname}:{PortNumber}", Nickname, _clientGuid);
-            if (await client.ConnectAsync())
+
+            try
             {
-                var gameVm = new GameSurfaceViewModel(_clientGuid, client);
-                client.ClientUI = gameVm;
-                ShellViewModel.Instance.UpdateMainRegion(gameVm);
+                IsBusy = true;
+                if (await client.ConnectAsync())
+                {
+                    var gameVm = new GameSurfaceViewModel(_clientGuid, client);
+                    client.ClientUI = gameVm;
+                    ShellViewModel.Instance.UpdateMainRegion(gameVm);
+                }
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("Could not connect.");
+            }
+            finally
+            {
+                IsBusy = false;
             }
         }
     }
