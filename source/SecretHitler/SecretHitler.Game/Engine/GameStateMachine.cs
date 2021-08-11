@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+
+using Microsoft.Extensions.Logging;
+
 using SecretHitler.Game.Entities;
 using SecretHitler.Game.Enums;
 using SecretHitler.Game.Interfaces;
@@ -11,27 +15,35 @@ namespace SecretHitler.Game.Engine
     /// <summary>
     /// State machine for the Secret Hitler game.
     /// </summary>
-    public partial class GameStateMachine : IPlayerResponseHandler
+    public class GameStateMachine : IPlayerResponseHandler
     {
+        private readonly ILogger<GameStateMachine> _logger;
+
         /// <summary>
         /// Constructs a new instance of the game state machine.
         /// </summary>
-        public GameStateMachine(IPlayerDirector director, GameData gameData = null)
+        public GameStateMachine(IPlayerDirector director, ILogger<GameStateMachine> logger)
         {
+            _logger = logger;
             Director = director;
-            GameData = gameData ?? new GameData();
+            GameData = new GameData();
             GameDataManipulator = new GameDataManipulator(GameData);
-            PolicyDeck = new PolicyDeck(GameData.DrawPile, GameData.DiscardPile, gameData == null);
+            PolicyDeck = new PolicyDeck(GameData.DrawPile, GameData.DiscardPile, true);
+        }
+
+        public void LoadGameState(GameData data)
+        {
+            GameData = data;
+            GameDataManipulator = new GameDataManipulator(GameData);
+            PolicyDeck = new PolicyDeck(data.DrawPile, data.DiscardPile, false);
         }
 
         #region Properties
 
-        private object _voteLock = new object();
-
         /// <summary>
         /// The data backing the state machine.
         /// </summary>
-        public Entities.GameData GameData { get; }
+        public Entities.GameData GameData { get; private set; }
 
         /// <summary>
         /// Gets the object responsible for sending a message to one or more clients.
@@ -39,14 +51,9 @@ namespace SecretHitler.Game.Engine
         public IPlayerDirector Director { get; set; }
 
         /// <summary>
-        /// The current state of the machine.
-        /// </summary>
-        public StateMachineState MachineState { get; internal set; } = StateMachineState.None;
-
-        /// <summary>
         /// Whether game is in progress.
         /// </summary>
-        public bool GameInProgress => MachineState != StateMachineState.None;
+        public bool GameInProgress => GameData.MachineState != StateMachineState.None;
 
         /// <summary>
         /// The policy draw and discard pile manager.
@@ -58,25 +65,9 @@ namespace SecretHitler.Game.Engine
         /// </summary>
         internal GameDataManipulator GameDataManipulator { get; set; }
 
-        /// <summary>
-        /// Ja vote count
-        /// </summary>
-        internal int JaVoteCount { get; set; }
-
-        /// <summary>
-        /// Nein vote count
-        /// </summary>
-        internal int NeinVoteCount { get; set; }
-
         /// Whether or not vetoes are allowed.
         /// </summary>
         internal bool AllowVetoes => GameData.EnactedFascistPolicyCount >= Constants.MinFascistPolicyCountForVeto;
-
-        /// <summary>
-        /// The last policies drawn from the deck. This accommodates discarding cards when getting a response
-        /// from the player.
-        /// </summary>
-        internal List<PolicyType> DrawnPolicies { get; set; }
 
         #endregion
 
@@ -85,30 +76,31 @@ namespace SecretHitler.Game.Engine
         /// <summary>
         /// Start the game.
         /// </summary>
-        public void Start()
+        public async Task Start()
         {
-            if (MachineState != StateMachineState.None)
+            if (GameData.MachineState != StateMachineState.None)
                 throw new GameStateException("Game already in progress.");
 
-            PrepareGame();
+            await PrepareGame();
         }
 
         /// <summary>
         /// Sends updated game data to players.
         /// </summary>
-        public void DisseminateGameData()
+        public async Task DisseminateGameData()
         {
-            foreach (var p in GameData.Players)
-                Director.UpdateGameData(p, PrepareGameDataForPlayerDissemination(p));
+            await Task.WhenAll(GameData.Players.Select(player => Director.UpdateGameData(player, PrepareGameDataForPlayerDissemination(player))));
+            // TODO Remove
+            await Task.Delay(1000);
         }
 
         /// <summary>
         /// Indicates a simple acknowledgement from a client.
         /// </summary>
         /// <param name="acknowledge">Favorable or unfavorable response, or null if not applicable.</param>
-        public void Acknowledge(bool? acknowledge)
+        public async Task Acknowledge(bool? acknowledge)
         {
-            switch (MachineState)
+            switch (GameData.MachineState)
             {
                 case StateMachineState.AwaitingVetoResponse:
                     if (!acknowledge.HasValue)
@@ -118,26 +110,26 @@ namespace SecretHitler.Game.Engine
                     else if (acknowledge.Value)
                     {
                         // TODO test
-                        PolicyDeck.Discard(DrawnPolicies);
-                        DrawnPolicies = null;
-                        UpdateElectionTrackerAndHandleChaos("The policies were successfully vetoed!");
+                        PolicyDeck.Discard(GameData.DrawnPolicies);
+                        GameData.DrawnPolicies = null;
+                        await UpdateElectionTrackerAndHandleChaos("The policies were successfully vetoed!");
                     }
                     else
                     {
                         // TODO test
-                        Director.Broadcast("Unsuccessful veto. The chancellor must choose a policy.");
-                        MachineState = StateMachineState.AwaitingEnactedPolicy;
-                        Director.GetEnactedPolicy(GameData.Chancellor, DrawnPolicies, false);
+                        await Director.Broadcast("Unsuccessful veto. The chancellor must choose a policy.");
+                        GameData.MachineState = StateMachineState.AwaitingEnactedPolicy;
+                        await Director.GetEnactedPolicy(GameData.Chancellor, GameData.DrawnPolicies, false);
                     }
 
                     break;
 
                 case StateMachineState.AwaitingSpecialPowerAcknowledgment:
-                    PrepareNextElection();
+                    await PrepareNextElection();
                     break;
 
                 default:
-                    throw new GameStateException($"{nameof(Acknowledge)} called for invalid state {MachineState}.");
+                    throw new GameStateException($"{nameof(Acknowledge)} called for invalid state {GameData.MachineState}.");
             }
         }
 
@@ -145,39 +137,39 @@ namespace SecretHitler.Game.Engine
         /// Indicates that a player has been selected by the client that was last issued a request.
         /// </summary>
         /// <param name="player">The selected player.</param>
-        public void PlayerSelected(Guid player)
+        public async Task PlayerSelected(Guid player)
         {
-            switch (MachineState)
+            switch (GameData.MachineState)
             {
                 case StateMachineState.AwaitingNomination:
                     GameData.Chancellor = CoercePlayer(player);
-                    Director.Broadcast($"The president has nominated {GameData.Chancellor.Name} as chancellor.");
-                    MachineState = StateMachineState.AwaitingVotes;
-                    DisseminateGameData();
-                    Director.Broadcast("It is time to vote.");
-                    Director.GetVotes(GameData.Players.Where(_ => _.IsAlive).AsGuids());
+                    await Director.Broadcast($"The president has nominated {GameData.Chancellor.Name} as chancellor.");
+                    GameData.MachineState = StateMachineState.AwaitingVotes;
+                    await DisseminateGameData();
+                    await Director.Broadcast("It is time to vote.");
+                    await Director.GetVotes(GameData.Players.Where(_ => _.IsAlive).AsGuids());
                     break;
 
                 case StateMachineState.AwaitingSpecialElectionPick:
-                    PrepareNextElection(specialElectionPresident: CoercePlayer(player));
+                    await PrepareNextElection(specialElectionPresident: CoercePlayer(player));
                     break;
 
                 case StateMachineState.AwaitingExecutionPick:
                     var playerToKill = CoercePlayer(player);
-                    Director.Broadcast($"The president has chosen to execute {playerToKill.Name}.");
+                    await Director.Broadcast($"The president has chosen to execute {playerToKill.Name}.");
                     playerToKill.IsAlive = false;
-                    PrepareNextElection();
+                    await PrepareNextElection();
                     break;
 
                 case StateMachineState.AwaitingInvestigateLoyaltyPick:
                     var playerToReveal = CoercePlayer(player);
-                    Director.Broadcast($"The president is now aware of the loyalty of {playerToReveal.Name}.");
-                    Director.Reveal(GameData.President, playerToReveal.Identifier, playerToReveal.Role == PlayerRole.Liberal ? PlayerRole.Liberal : PlayerRole.Fascist);
-                    MachineState = StateMachineState.AwaitingSpecialPowerAcknowledgment;
+                    await Director.Broadcast($"The president is now aware of the loyalty of {playerToReveal.Name}.");
+                    await Director.Reveal(GameData.President, playerToReveal.Identifier, playerToReveal.Role == PlayerRole.Liberal ? PlayerRole.Liberal : PlayerRole.Fascist);
+                    GameData.MachineState = StateMachineState.AwaitingSpecialPowerAcknowledgment;
                     break;
 
                 default:
-                    throw new GameStateException($"{nameof(PlayerSelected)} called for invalid state {MachineState}.");
+                    throw new GameStateException($"{nameof(PlayerSelected)} called for invalid state {GameData.MachineState}.");
             }
         }
 
@@ -185,10 +177,10 @@ namespace SecretHitler.Game.Engine
         /// Indicates that one or more policies were selected by the client asked to select policies.
         /// </summary>
         /// <param name="policies">The selected policies.</param>
-        public void PoliciesSelected(IEnumerable<PolicyType> policies)
+        public async Task PoliciesSelected(IEnumerable<PolicyType> policies)
         {
             var myPolicies = policies.ToList();
-            switch (MachineState)
+            switch (GameData.MachineState)
             {
                 case StateMachineState.AwaitingEnactedPolicy:
                     // TODO Validate policy was actually drawn, delivered by correct player
@@ -201,34 +193,36 @@ namespace SecretHitler.Game.Engine
                         if (!AllowVetoes)
                             throw new GameStateException("Currently not eligible to veto policies.");
 
-                        Director.Broadcast("A veto has been requested.");
-                        MachineState = StateMachineState.AwaitingVetoResponse;
-                        Director.ApproveVeto(GameData.President);
+                        await Director.Broadcast("A veto has been requested.");
+                        GameData.MachineState = StateMachineState.AwaitingVetoResponse;
+                        await Director.ApproveVeto(GameData.President);
                         return;
                     }
 
                     foreach (var p in myPolicies)
-                        DrawnPolicies.Remove(p);
+                    {
+                        GameData.DrawnPolicies.Remove(p);
+                    }
 
-                    PolicyDeck.Discard(DrawnPolicies);
-                    DrawnPolicies = null;
+                    PolicyDeck.Discard(GameData.DrawnPolicies);
+                    GameData.DrawnPolicies = null;
 
                     if (policy == PolicyType.Fascist)
                     {
-                        Director.Broadcast("A fascist policy has been enacted!");
+                        await Director.Broadcast("A fascist policy has been enacted!");
                         GameData.EnactedFascistPolicyCount++;
-                        DisseminateGameData();
+                        await DisseminateGameData();
 
                         if (InvokeCurrentPresidentialPower())
                             return;
                     }
                     else if (policy == PolicyType.Liberal)
                     {
-                        Director.Broadcast("A liberal policy has been enacted!");
+                        await Director.Broadcast("A liberal policy has been enacted!");
                         GameData.EnactedLiberalPolicyCount++;
                     }
 
-                    PrepareNextElection();
+                    await PrepareNextElection();
                     break;
 
                 case StateMachineState.AwaitingPresidentialPolicies:
@@ -238,18 +232,20 @@ namespace SecretHitler.Game.Engine
                         throw new GameStateException("Too many/few policies selected for the current game state.");
 
                     foreach (var p in myPolicies)
-                        DrawnPolicies.Remove(p);
+                    {
+                        GameData.DrawnPolicies.Remove(p);
+                    }
 
-                    PolicyDeck.Discard(DrawnPolicies);
-                    DrawnPolicies = policies.ToList();
+                    PolicyDeck.Discard(GameData.DrawnPolicies);
+                    GameData.DrawnPolicies = policies.ToList();
 
-                    Director.Broadcast("The president has offered policies to the chancellor.");
-                    MachineState = StateMachineState.AwaitingEnactedPolicy;
-                    Director.GetEnactedPolicy(GameData.Chancellor, policies, AllowVetoes);
+                    await Director.Broadcast("The president has offered policies to the chancellor.");
+                    GameData.MachineState = StateMachineState.AwaitingEnactedPolicy;
+                    await Director.GetEnactedPolicy(GameData.Chancellor, policies, AllowVetoes);
                     break;
 
                 default:
-                    throw new GameStateException($"{nameof(PoliciesSelected)} called for invalid state {MachineState}.");
+                    throw new GameStateException($"{nameof(PoliciesSelected)} called for invalid state {GameData.MachineState}.");
             }
         }
 
@@ -257,50 +253,55 @@ namespace SecretHitler.Game.Engine
         /// Indicates that a vote has been collected.
         /// </summary>
         /// <param name="vote">The collected vote.</param>
-        public void VoteCollected(bool vote)
+        public async Task VoteCollected(bool vote)
         {
-            lock (_voteLock)
+            if (GameData.MachineState != StateMachineState.AwaitingVotes)
             {
-                if (MachineState != StateMachineState.AwaitingVotes)
-                    throw new GameStateException($"{nameof(VoteCollected)} called for invalid state {MachineState}.");
-
-                if (vote)
-                    JaVoteCount++;
-                else
-                    NeinVoteCount++;
-
-                if (JaVoteCount + NeinVoteCount < GameData.Players.Count(_ => _.IsAlive))
-                    return;
-
-                var message = $"Votes have been tallied: {JaVoteCount} ja, {NeinVoteCount} nein.";
-                if (JaVoteCount > NeinVoteCount)
-                {
-                    Director.Broadcast($"{message} The election was successful.");
-
-                    if(GameData.EnactedFascistPolicyCount >= Constants.RequiredFascistPoliciesForHitlerChancellorshipVictory && GameData.Chancellor.Role == PlayerRole.Hitler)
-                    {
-                        MachineState = StateMachineState.None;
-                        Director.Broadcast("Congratulations on becoming chancellor, Hitler. FASCIST VICTORY!");
-                        DisseminateGameData();
-                        return;
-                    }
-
-                    MachineState = StateMachineState.AwaitingPresidentialPolicies;
-                    DisseminateGameData();
-                    DrawnPolicies = PolicyDeck.Draw(Constants.PresidentialPolicyDrawCount).ToList();
-                    Director.GetPresidentialPolicies(GameData.President, DrawnPolicies);
-                }
-                else
-                {
-                    message = $"{message} The election failed.";
-                    UpdateElectionTrackerAndHandleChaos(message);
-                }
-
-                JaVoteCount = 0;
-                NeinVoteCount = 0;
+                throw new GameStateException($"{nameof(VoteCollected)} called for invalid state {GameData.MachineState}.");
             }
+
+            if (vote)
+            {
+                GameData.JaVoteCount++;
+            }
+            else
+            {
+                GameData.NeinVoteCount++;
+            }
+
+            if (GameData.JaVoteCount + GameData.NeinVoteCount < GameData.Players.Count(_ => _.IsAlive))
+            {
+                return;
+            }
+
+            var message = $"Votes have been tallied: {GameData.JaVoteCount} ja, {GameData.NeinVoteCount} nein.";
+            if (GameData.JaVoteCount > GameData.NeinVoteCount)
+            {
+                await Director.Broadcast($"{message} The election was successful.");
+
+                if (GameData.EnactedFascistPolicyCount >= Constants.RequiredFascistPoliciesForHitlerChancellorshipVictory && GameData.Chancellor.Role == PlayerRole.Hitler)
+                {
+                    GameData.MachineState = StateMachineState.None;
+                    await Director.Broadcast("Congratulations on becoming chancellor, Hitler. FASCIST VICTORY!");
+                    await DisseminateGameData();
+                    return;
+                }
+
+                GameData.MachineState = StateMachineState.AwaitingPresidentialPolicies;
+                await DisseminateGameData();
+                GameData.DrawnPolicies = PolicyDeck.Draw(Constants.PresidentialPolicyDrawCount).ToList();
+                await Director.GetPresidentialPolicies(GameData.President, GameData.DrawnPolicies);
+            }
+            else
+            {
+                message = $"{message} The election failed.";
+                await UpdateElectionTrackerAndHandleChaos(message);
+            }
+
+            GameData.JaVoteCount = 0;
+            GameData.NeinVoteCount = 0;
         }
-    
+
         #endregion
 
         #region Private Methods
@@ -318,10 +319,10 @@ namespace SecretHitler.Game.Engine
             };
 
             var canDiscloseFascists = player.Role == PlayerRole.Fascist ||
-                (player.Role == PlayerRole.Hitler && GameData.Players.Count <= 6);
+                                      (player.Role == PlayerRole.Hitler && GameData.Players.Count <= 6);
             var canDiscloseHitler = player.Role != PlayerRole.Liberal;
 
-            gd.Players.AddRange(GameData.Players.Select(p =>
+            var playersEnumerable = GameData.Players.Select(p =>
             {
                 var rtn = new PlayerData()
                 {
@@ -340,45 +341,55 @@ namespace SecretHitler.Game.Engine
                     rtn.Role = PlayerRole.Liberal;
 
                 return rtn;
-            }));
+            });
+
+            foreach (var p in playersEnumerable)
+            {
+                gd.Players.Add(p);
+            }
 
             return gd;
         }
 
-        private void PrepareGame()
+        private async Task PrepareGame()
         {
+            _logger.LogInformation("Resetting game state.");
             GameDataManipulator.ResetGame();
-            JaVoteCount = 0;
-            NeinVoteCount = 0;
-            PrepareNextElection();
+            await PrepareNextElection();
         }
 
-        private void PrepareNextElection(bool updateTermLimits = true, IPlayerInfo specialElectionPresident = null)
+        private async Task PrepareNextElection(bool updateTermLimits = true, IPlayerInfo specialElectionPresident = null)
         {
+            _logger.LogInformation("Preparing election.");
+
             if (!GameData.Players.First(_ => _.Role == PlayerRole.Hitler).IsAlive)
             {
-                MachineState = StateMachineState.None;
-                Director.Broadcast("HITLER IS DEAD! LIBERAL VICTORY!");
-                DisseminateGameData();
+                GameData.MachineState = StateMachineState.None;
+                await Director.Broadcast("HITLER IS DEAD! LIBERAL VICTORY!");
+                await DisseminateGameData();
                 return;
             }
-            else if (GameData.EnactedLiberalPolicyCount == Constants.LiberalPoliciesRequiredForVictory)
+
+            if (GameData.EnactedLiberalPolicyCount == Constants.LiberalPoliciesRequiredForVictory)
             {
-                MachineState = StateMachineState.None;
-                Director.Broadcast("All liberal policies have been enacted. LIBERAL VICTORY!");
-                DisseminateGameData();
+                GameData.MachineState = StateMachineState.None;
+                await Director.Broadcast("All liberal policies have been enacted. LIBERAL VICTORY!");
+                await DisseminateGameData();
                 return;
             }
-            else if (GameData.EnactedFascistPolicyCount == Constants.FascistPoliciesRequiredForVictory)
+
+            if (GameData.EnactedFascistPolicyCount == Constants.FascistPoliciesRequiredForVictory)
             {
-                MachineState = StateMachineState.None;
-                Director.Broadcast("All fascist policies have been enacted. FASCIST VICTORY!");
-                DisseminateGameData();
+                GameData.MachineState = StateMachineState.None;
+                await Director.Broadcast("All fascist policies have been enacted. FASCIST VICTORY!");
+                await DisseminateGameData();
                 return;
             }
 
             if (updateTermLimits)
+            {
                 GameDataManipulator.UpdateTermLimits();
+            }
 
             GameData.Chancellor = null;
 
@@ -392,27 +403,27 @@ namespace SecretHitler.Game.Engine
             }
 
             var candidates = GameData.Players.Where(_ => _.IsAlive && !_.IsPresident && !GameData.IneligibleChancellors.Contains(_.Identifier)).ToArray();
-            MachineState = StateMachineState.AwaitingNomination;
+            GameData.MachineState = StateMachineState.AwaitingNomination;
 
-            DisseminateGameData();
-            Director.Broadcast($"{GameData.President.Name} is now president and will nominate a chancellor.");
-            Director.SelectPlayer(GameData.President, GameState.ChancellorNomination, candidates.AsGuids());
+            await DisseminateGameData();
+            await Director.Broadcast($"{GameData.President.Name} is now president and will nominate a chancellor.");
+            await Director.SelectPlayer(GameData.President, GameState.ChancellorNomination, candidates.AsGuids());
         }
 
-        private void UpdateElectionTrackerAndHandleChaos(string messagePrefix)
+        private async Task UpdateElectionTrackerAndHandleChaos(string messagePrefix)
         {
             var chaos = GameDataManipulator.UpdateElectionTracker();
-            DisseminateGameData();
+            await DisseminateGameData();
             if (chaos)
             {
-                Director.Broadcast($"{messagePrefix} Due to inactive government, there is chaos on the streets!".Trim());
+                await Director.Broadcast($"{messagePrefix} Due to inactive government, there is chaos on the streets!".Trim());
             }
             else
             {
-                Director.Broadcast($"{messagePrefix} The election tracker is now at {GameData.ElectionTracker}. When it reaches {Constants.FailedElectionThreshold}, a policy will be enacted.".Trim());
+                await Director.Broadcast($"{messagePrefix} The election tracker is now at {GameData.ElectionTracker}. When it reaches {Constants.FailedElectionThreshold}, a policy will be enacted.".Trim());
             }
 
-            PrepareNextElection(false);
+            await PrepareNextElection(false);
         }
 
         /// <summary>
@@ -422,7 +433,7 @@ namespace SecretHitler.Game.Engine
         /// </summary>
         private bool InvokeCurrentPresidentialPower()
         {
-            var delegates = new Dictionary<int, Action>();
+            var delegates = new Dictionary<int, Func<Task>>();
             var index = GameData.EnactedFascistPolicyCount - 1;
             delegates[3] = InvokeExecution;
             delegates[4] = InvokeExecution;
@@ -460,33 +471,33 @@ namespace SecretHitler.Game.Engine
             return false;
         }
 
-        private void InvokePolicyPeek()
+        private async Task InvokePolicyPeek()
         {
             var policiesToDisplay = PolicyDeck.Peek(Constants.PresidentialPolicyDrawCount);
-            MachineState = StateMachineState.AwaitingSpecialPowerAcknowledgment;
-            Director.Broadcast($"The president is being shown the topmost {Constants.PresidentialPolicyDrawCount} policies on the draw pile.");
-            Director.PolicyPeek(GameData.President, policiesToDisplay);
+            GameData.MachineState = StateMachineState.AwaitingSpecialPowerAcknowledgment;
+            await Director.Broadcast($"The president is being shown the topmost {Constants.PresidentialPolicyDrawCount} policies on the draw pile.");
+            await Director.PolicyPeek(GameData.President, policiesToDisplay);
         }
 
-        private void InvokeExecution()
+        private async Task InvokeExecution()
         {
-            MachineState = StateMachineState.AwaitingExecutionPick;
-            Director.Broadcast("The president is choosing a player to execute.");
-            Director.SelectPlayer(GameData.President, GameState.Execution, GameData.Players.Where(_ => _.IsAlive && !_.HasSameIdentifierAs(GameData.President)).Select(_ => _.Identifier));
+            GameData.MachineState = StateMachineState.AwaitingExecutionPick;
+            await Director.Broadcast("The president is choosing a player to execute.");
+            await Director.SelectPlayer(GameData.President, GameState.Execution, GameData.Players.Where(_ => _.IsAlive && !_.HasSameIdentifierAs(GameData.President)).Select(_ => _.Identifier));
         }
 
-        private void InvokeInvestigateLoyalty()
+        private async Task InvokeInvestigateLoyalty()
         {
-            MachineState = StateMachineState.AwaitingInvestigateLoyaltyPick;
-            Director.Broadcast("The president is choosing a player to investigate his/her loyalty.");
-            Director.SelectPlayer(GameData.President, GameState.InvestigateLoyalty, GameData.Players.Where(_ => _.IsAlive && !_.HasSameIdentifierAs(GameData.President)).Select(_ => _.Identifier));
+            GameData.MachineState = StateMachineState.AwaitingInvestigateLoyaltyPick;
+            await Director.Broadcast("The president is choosing a player to investigate his/her loyalty.");
+            await Director.SelectPlayer(GameData.President, GameState.InvestigateLoyalty, GameData.Players.Where(_ => _.IsAlive && !_.HasSameIdentifierAs(GameData.President)).Select(_ => _.Identifier));
         }
 
-        private void InvokeSpecialElection()
+        private async Task InvokeSpecialElection()
         {
-            MachineState = StateMachineState.AwaitingSpecialElectionPick;
-            Director.Broadcast("The president is choosing a player to serve as president in a special election.");
-            Director.SelectPlayer(GameData.President, GameState.SpecialElection, GameData.Players.Where(_ => _.IsAlive && !_.HasSameIdentifierAs(GameData.President)).Select(_ => _.Identifier));
+            GameData.MachineState = StateMachineState.AwaitingSpecialElectionPick;
+            await Director.Broadcast("The president is choosing a player to serve as president in a special election.");
+            await Director.SelectPlayer(GameData.President, GameState.SpecialElection, GameData.Players.Where(_ => _.IsAlive && !_.HasSameIdentifierAs(GameData.President)).Select(_ => _.Identifier));
         }
 
         private PlayerData CoercePlayer(IPlayerInfo player) => GameData.Players.Single(_ => _.Identifier == player.Identifier);

@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using SecretHitler.Game.Enums;
 using System;
+using System.Threading.Tasks;
+
 using SecretHitler.Game.Entities;
 
 namespace SecretHitler.Game.Interfaces
@@ -10,24 +12,24 @@ namespace SecretHitler.Game.Interfaces
     /// </summary>
     public interface IPlayerDirector
     {
-        void UpdateGameData(Guid player, GameData gameData);
+        Task UpdateGameData(Guid player, GameData gameData);
 
-        void Broadcast(string message);
+        Task Broadcast(string message);
 
-        void SendMessage(Guid player, string message);
+        Task SendMessage(Guid player, string message);
 
-        void SelectPlayer(Guid chooser, GameState gameState, IEnumerable<Guid> candidates);
+        Task SelectPlayer(Guid chooser, GameState gameState, IEnumerable<Guid> candidates);
 
-        void GetVotes(IEnumerable<Guid> voters);
+        Task GetVotes(IEnumerable<Guid> voters);
 
-        void GetPresidentialPolicies(Guid president, IEnumerable<PolicyType> drawnPolicies);
+        Task GetPresidentialPolicies(Guid president, IEnumerable<PolicyType> drawnPolicies);
 
-        void GetEnactedPolicy(Guid chancellor, IEnumerable<PolicyType> drawnPolicies, bool allowVeto);
+        Task GetEnactedPolicy(Guid chancellor, IEnumerable<PolicyType> drawnPolicies, bool allowVeto);
 
-        void PolicyPeek(Guid president, IEnumerable<PolicyType> deckTopThree);
+        Task PolicyPeek(Guid president, IEnumerable<PolicyType> deckTopThree);
 
-        void Reveal(Guid president, Guid revealedGuid, PlayerRole role);
+        Task Reveal(Guid president, Guid revealedGuid, PlayerRole role);
 
-        void ApproveVeto(Guid president);
+        Task ApproveVeto(Guid president);
     }
 }

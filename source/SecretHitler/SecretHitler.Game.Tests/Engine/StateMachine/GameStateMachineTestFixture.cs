@@ -1,9 +1,14 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+
+using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using SecretHitler.Game.Engine;
 using SecretHitler.Game.Entities;
+using SecretHitler.Game.Enums;
 using SecretHitler.Game.Interfaces;
 
 namespace SecretHitler.Game.Tests.Engine.StateMachine
@@ -26,7 +31,7 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
         public void TestInitialize()
         {
             Director = new Mock<IPlayerDirector>();
-            StateMachine = new GameStateMachine(Director.Object);
+            StateMachine = new GameStateMachine(Director.Object, Mock.Of<ILogger<GameStateMachine>>());
             Manipulator = new Mock<GameDataManipulator>(GameData) { CallBase = true };
             StateMachine.GameDataManipulator = Manipulator.Object;
             ResetPlayers();
@@ -34,7 +39,7 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
 
         protected void ResetPlayers(int playerCt = Constants.MinPlayerCount)
         {
-            Players.Clear();
+            GameData.Players = new List<PlayerData>();
             AddPlayers(playerCt);
         }
 
@@ -52,10 +57,10 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
             }
         }
 
-        protected void VotesCollected(IEnumerable<bool> votes)
+        protected async Task VotesCollected(IEnumerable<bool> votes)
         {
             foreach (var v in votes)
-                StateMachine.VoteCollected(v);
+                await StateMachine.VoteCollected(v);
         }
     }
 }

@@ -1,6 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using Microsoft.AspNet.SignalR;
+using System.Linq;
+using System.Threading.Tasks;
+
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
+
 using SecretHitler.Game.Enums;
 using SecretHitler.Game.Interfaces;
 using SecretHitler.Game.Entities;
@@ -10,80 +15,88 @@ namespace SecretHitler.Server
 {
     public class Director : IPlayerDirector
     {
-        private Director(IHubContext connectionContext)
+        private readonly ILogger<Director> _logger;
+
+        public Director(IHubContext<ServerHub, IHubClient> connectionContext, ILogger<Director> logger)
         {
+            _logger = logger;
             Context = connectionContext;
         }
 
-        // Singleton instance
-        private readonly static Lazy<Director> _instance = new Lazy<Director>(() =>
-        {
-            return new Director(GlobalHost.ConnectionManager.GetHubContext<ServerHub>());
-        });
+        private IHubContext<ServerHub, IHubClient> Context { get; set; }
 
-        private IHubContext Context { get; set; }
 
-        public static Director Instance
+        public async Task Broadcast(string message)
         {
-            get
-            {
-                return _instance.Value;
-            }
+            _logger.LogInformation($"Chat message: {message}");
+            await Context.Clients.All.MessageReceived(message);
         }
 
-        public void Broadcast(string message)
+        public async Task SendMessage(Guid player, string message)
         {
-            Console.WriteLine(message);
-            Context.Clients.All.MessageReceived(message);
+            _logger.LogInformation($"Chat message from {player}: {message}");
+            await GetUser(player).MessageReceived(message);
         }
 
-        public void SendMessage(Guid player, string message)
+        public async Task UpdateGameData(Guid player, GameData gameData)
         {
-            GetUser(player).MessageReceived(message);
+            _logger.LogDebug($"Transmit {nameof(IHubClient.UpdateGameData)} to player {player}");
+            await GetUser(player).UpdateGameData(gameData);
         }
 
-        public void UpdateGameData(Guid player, GameData gameData)
+        public async Task SelectPlayer(Guid chooser, GameState gameState, IEnumerable<Guid> candidates)
         {
-            GetUser(player).UpdateGameData(gameData);
+            var enumerable = candidates as Guid[] ?? candidates.ToArray();
+            _logger.LogDebug($"Transmit {nameof(IHubClient.PlayerSelectionRequested)} to player {chooser} with state {gameState} and {enumerable.Length} candidates.");
+            await GetUser(chooser).PlayerSelectionRequested(gameState, enumerable);
         }
 
-        public void SelectPlayer(Guid chooser, GameState gameState, IEnumerable<Guid> candidates)
+        public async Task GetVotes(IEnumerable<Guid> voters)
         {
-            GetUser(chooser).PlayerSelectionRequested(gameState, candidates);
-        }
-
-        public void GetVotes(IEnumerable<Guid> voters)
-        {
+            var tasks = new List<Task>();
             foreach (var voter in voters)
-                GetUser(voter).PlayerVoteRequested();
+            {
+                _logger.LogDebug($"Transmit {nameof(IHubClient.PlayerVoteRequested)} to player {voter}.");
+                tasks.Add(GetUser(voter).PlayerVoteRequested());
+            }
+
+            await Task.WhenAll(tasks);
         }
 
-        public void GetPresidentialPolicies(Guid president, IEnumerable<PolicyType> drawnPolicies)
+        public async Task GetPresidentialPolicies(Guid president, IEnumerable<PolicyType> drawnPolicies)
         {
-            GetUser(president).PolicySelectionRequested(drawnPolicies, Constants.PresidentialPolicyPassCount, false);
+            var policyTypes = drawnPolicies as PolicyType[] ?? drawnPolicies.ToArray();
+            _logger.LogDebug($"Transmit {nameof(IHubClient.PolicySelectionRequested)} to player {president} with policies {string.Join(",", policyTypes.Select(_ => _.ToString()))}.");
+            await GetUser(president).PolicySelectionRequested(policyTypes, Constants.PresidentialPolicyPassCount, false);
         }
 
-        public void GetEnactedPolicy(Guid chancellor, IEnumerable<PolicyType> drawnPolicies, bool allowVeto)
+        public async Task GetEnactedPolicy(Guid chancellor, IEnumerable<PolicyType> drawnPolicies, bool allowVeto)
         {
-            GetUser(chancellor).PolicySelectionRequested(drawnPolicies, Constants.ChancellorPolicySelectionCount, allowVeto);
+            var policyTypes = drawnPolicies as PolicyType[] ?? drawnPolicies.ToArray();
+            _logger.LogDebug($"Transmit {nameof(IHubClient.PolicySelectionRequested)} to player {chancellor} with policies {string.Join(",", policyTypes.Select(_ => _.ToString()))}.");
+            await GetUser(chancellor).PolicySelectionRequested(policyTypes, Constants.ChancellorPolicySelectionCount, allowVeto);
         }
 
-        public void PolicyPeek(Guid president, IEnumerable<PolicyType> deckTopThree)
+        public async Task PolicyPeek(Guid president, IEnumerable<PolicyType> deckTopThree)
         {
-            GetUser(president).PolicyPeek(deckTopThree);
+            var policyTypes = deckTopThree as PolicyType[] ?? deckTopThree.ToArray();
+            _logger.LogDebug($"Transmit {nameof(IHubClient.PolicyPeek)} to player {president} with revealed policies {string.Join(",", policyTypes.Select(_ => _.ToString()))}.");
+            await GetUser(president).PolicyPeek(policyTypes);
         }
 
-        public void Reveal(Guid president, Guid revealedGuid, PlayerRole role)
+        public async Task Reveal(Guid president, Guid revealedGuid, PlayerRole role)
         {
-            GetUser(president).LoyaltyPeek(revealedGuid, role);
+            _logger.LogDebug($"Transmit {nameof(IHubClient.LoyaltyPeek)} to player {president} for player {revealedGuid} with role {role}.");
+            await GetUser(president).LoyaltyPeek(revealedGuid, role);
         }
 
-        public void ApproveVeto(Guid president)
+        public async Task ApproveVeto(Guid president)
         {
-            GetUser(president).ApproveVetoRequested();
+            _logger.LogDebug($"Transmit {nameof(IHubClient.ApproveVetoRequested)} to player {president}.");
+            await GetUser(president).ApproveVetoRequested();
         }
 
-        private dynamic GetUser(Guid guid)
+        private IHubClient GetUser(Guid guid)
         {
             return Context.Clients.Group(guid.ToString());
         }

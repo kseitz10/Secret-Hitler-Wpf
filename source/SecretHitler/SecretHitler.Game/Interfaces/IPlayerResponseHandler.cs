@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using SecretHitler.Game.Enums;
 using System;
+using System.Threading.Tasks;
 
 namespace SecretHitler.Game.Interfaces
 {
@@ -13,24 +14,24 @@ namespace SecretHitler.Game.Interfaces
         /// Indicates that a player has been selected by the client that was last issued a request.
         /// </summary>
         /// <param name="player">The selected player.</param>
-        void PlayerSelected(Guid player);
+        Task PlayerSelected(Guid player);
 
         /// <summary>
         /// Indicates that a vote has been collected from a player.
         /// </summary>
         /// <param name="vote">The collected vote.</param>
-        void VoteCollected(bool vote);
+        Task VoteCollected(bool vote);
 
         /// <summary>
         /// Indicates that one or more policies were selected by the client asked to select policies.
         /// </summary>
         /// <param name="policies">The selected policies.</param>
-        void PoliciesSelected(IEnumerable<PolicyType> policies);
+        Task PoliciesSelected(IEnumerable<PolicyType> policies);
 
         /// <summary>
         /// Indicates a simple acknowledgement from a client.
         /// </summary>
         /// <param name="acknowledge">Favorable or unfavorable response, or null if not applicable.</param>
-        void Acknowledge(bool? acknowledge);
+        Task Acknowledge(bool? acknowledge);
     }
 }

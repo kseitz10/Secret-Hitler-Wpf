@@ -12,16 +12,17 @@ namespace SecretHitler.Game.Engine
     /// <summary>
     /// A simple AI to take the place of players.
     /// </summary>
-    public class SimpleAI : IPlayerLogic
+    public class SimpleAI : IPlayerInterface
     {
         public Task<bool> GetVote()
         {
             return Task.FromResult(true);
         }
 
-        public void MessageReceived(string message)
+        public Task MessageReceived(string message)
         {
             // Intentionally blank.
+            return Task.CompletedTask;
         }
 
         public Task<bool> PromptForVetoApproval()
@@ -51,9 +52,10 @@ namespace SecretHitler.Game.Engine
             return Task.CompletedTask;
         }
 
-        public void UpdateGameData(GameData gameData)
+        public Task UpdateGameData(GameData gameData)
         {
             // Intentionally blank, but a good AI would do something with this information.
+            return Task.CompletedTask;
         }
 
         private async Task<T> PickRandom<T>(IEnumerable<T> items)

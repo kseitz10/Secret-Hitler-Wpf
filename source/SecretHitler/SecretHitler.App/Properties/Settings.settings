@@ -3,10 +3,10 @@
   <Profiles />
   <Settings>
     <Setting Name="LastHostname" Type="System.String" Scope="User">
-      <Value Profile="(Default)">127.0.0.1</Value>
+      <Value Profile="(Default)">localhost</Value>
     </Setting>
     <Setting Name="LastPort" Type="System.UInt16" Scope="User">
-      <Value Profile="(Default)">8888</Value>
+      <Value Profile="(Default)">5001</Value>
     </Setting>
     <Setting Name="LastNickname" Type="System.String" Scope="User">
       <Value Profile="(Default)">Thumb Bunker</Value>

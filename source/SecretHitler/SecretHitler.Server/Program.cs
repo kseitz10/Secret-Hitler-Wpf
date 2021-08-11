@@ -1,50 +1,26 @@
-﻿using System;
-using Microsoft.Owin.Hosting;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
+
+using Serilog;
 
 namespace SecretHitler.Server
 {
-    /// <summary>
-    /// Server app main console class
-    /// </summary>
-    class Program
+    public class Program
     {
-        /// <summary>
-        /// Entry point for server console app
-        /// </summary>
-        /// <param name="args"></param>
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
-            // TODO Make configurable, handle running as admin problem.
-            ServerUrl = "http://*:8888";
-            SignalR = WebApp.Start(ServerUrl);
-            var proxy = Director.Instance;
-
-            string cmd;
-            do
-            {
-                cmd = Console.ReadLine();
-
-                switch (cmd)
-                {
-                    case "start":
-                        ServerHub.StateMachine.Start();
-                        break;
-                    default:
-                        Console.WriteLine("Unsupported command. Try \"start\".");
-                        break;
-                }
-            }
-            while (cmd != "quit");
+            CreateHostBuilder(args).Build().Run();
         }
 
-        /// <summary>
-        /// Owin WebApp instance
-        /// </summary>
-        private static IDisposable SignalR { get; set; }
-
-        /// <summary>
-        /// The URL where the server will be hosted.
-        /// </summary>
-        public static string ServerUrl { get; private set; }
+        public static IHostBuilder CreateHostBuilder(string[] args)
+        {
+            return Host.CreateDefaultBuilder(args)
+                       .UseSerilog((cxt, cfg) => cfg.ReadFrom.Configuration(cxt.Configuration))
+                       .ConfigureWebHostDefaults(webBuilder => { webBuilder.UseStartup<Startup>(); });
+        }
     }
 }
