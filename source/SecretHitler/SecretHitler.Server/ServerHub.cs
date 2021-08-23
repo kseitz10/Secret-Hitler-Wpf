@@ -1,90 +1,96 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNet.SignalR;
+
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
+
 using SecretHitler.Game.Entities;
 using SecretHitler.Game.Engine;
 using SecretHitler.Game.Enums;
+using SecretHitler.Game.Interfaces;
 
 namespace SecretHitler.Server
 {
-    public class ServerHub : Hub
+    public class ServerHub : Hub<IHubClient>, IServerHub
     {
-        #region Persistent Data
+        private readonly GameStateMachine _stateMachine;
+        private readonly ILogger<ServerHub> _logger;
 
-        public static GameStateMachine StateMachine { get; private set; } = new GameStateMachine(Director.Instance);
-
-        public static List<PlayerData> Players => StateMachine.GameData.Players;
-
-        private static object _lock = new object();
-
-        #endregion
-
-        public void BroadcastMessage(string message)
+        public ServerHub(GameStateMachine stateMachine, GameDataAccessor gameRepo, ILogger<ServerHub> logger)
         {
-            message = $"{Context.QueryString["nickname"]} says: {message}";
-            BroadcastMessageImpl(message);
+            _stateMachine = stateMachine;
+            _logger = logger;
+            _stateMachine.LoadGameState(gameRepo.GameData);
         }
 
-        public void PlayerSelected(Guid playerGuid)
+        public IList<PlayerData> Players => _stateMachine.GameData.Players;
+
+        public async Task BroadcastMessage(string message)
         {
-            StateMachine.PlayerSelected(playerGuid);
+            message = $"{Context.GetHttpContext().Request.Query["nickname"]} says: {message}";
+            await Clients.All.MessageReceived(message);
         }
 
-        public void VoteSelected(bool vote)
+        public async Task PlayerSelected(Guid playerGuid)
         {
-            StateMachine.VoteCollected(vote);
+            _logger.LogDebug($"Received {nameof(PlayerSelected)} with {playerGuid}.");
+            await _stateMachine.PlayerSelected(playerGuid);
         }
 
-        public void PoliciesSelected(IEnumerable<PolicyType> policies)
+        public async Task VoteSelected(bool vote)
         {
-            StateMachine.PoliciesSelected(policies);
+            _logger.LogDebug($"Received {nameof(VoteSelected)} with {(vote ? "Ja" : "Nein")}.");
+            await _stateMachine.VoteCollected(vote);
         }
 
-        public void Acknowledge(bool? result)
+        public async Task PoliciesSelected(IEnumerable<PolicyType> policies)
         {
-            StateMachine.Acknowledge(result);
+            var policyTypes = policies as PolicyType[] ?? policies.ToArray();
+            _logger.LogDebug($"Received {nameof(PoliciesSelected)} with {string.Join(",", policyTypes.Select(_ => _.ToString()))}.");
+            await _stateMachine.PoliciesSelected(policyTypes);
         }
 
-        public override Task OnConnected()
+        public async Task Acknowledge(bool? result)
         {
-            lock (_lock)
+            _logger.LogDebug($"Received {nameof(Acknowledge)} with {result}.");
+            await _stateMachine.Acknowledge(result);
+        }
+
+        public override async Task OnConnectedAsync()
+        {
+            var request = Context.GetHttpContext().Request;
+            var nickname = request.Query["nickname"];
+            if (!Guid.TryParse(request.Query["guid"], out Guid guid))
+                throw new ArgumentException("Guid required");
+
+            var signalrConnectionId = Context.ConnectionId;
+            var existingPlayer = Players.SingleOrDefault(_ => _.Identifier == guid);
+            if (existingPlayer != null)
             {
-                var nickname = Context.QueryString["nickname"];
-                if (!Guid.TryParse(Context.QueryString["guid"], out Guid guid))
-                    throw new ArgumentException("Guid required");
+                await Groups.AddToGroupAsync(signalrConnectionId, guid.ToString());
+                await Clients.All.MessageReceived($"Client {nickname} has rejoined.");
+            }
+            else
+            {
+                // TODO Creating the player is not the responsibility of this object.
+                var player = new PlayerData { Name = nickname, Identifier = guid };
+                _stateMachine.GameData.Players.Add(player);
+                await Groups.AddToGroupAsync(signalrConnectionId, guid.ToString());
 
-                var signalrConnectionId = Context.ConnectionId;
-                var existingPlayer = Players.SingleOrDefault(_ => _.Identifier == guid);
-                if (existingPlayer != null)
+                await Task.Delay(TimeSpan.FromSeconds(1));
+                await Clients.All.MessageReceived($"Client {nickname} has joined.");
+
+                if (_stateMachine.GameData.MachineState != StateMachineState.None)
                 {
-                    Groups.Add(signalrConnectionId, guid.ToString());
-                    BroadcastMessageImpl($"Client {nickname} has rejoined.");
-                }
-                else
-                {
-                    // TODO Creating the player is not the responsibility of this object.
-                    var player = new PlayerData() { Name = nickname, Identifier = guid };
-                    StateMachine.GameData.Players.Add(player);
-                    Groups.Add(signalrConnectionId, guid.ToString());
-
-                    // Add a short delay. Uggh.
-                    Task.Run(async () =>
-                    {
-                        await Task.Delay(TimeSpan.FromSeconds(1));
-                        BroadcastMessageImpl($"Client {nickname} connected.");
-
-                        if (StateMachine.MachineState != StateMachineState.None)
-                            StateMachine.DisseminateGameData();
-                    });
+                    await _stateMachine.DisseminateGameData();
                 }
             }
-
-            return base.OnConnected();
         }
 
-        public override Task OnDisconnected(bool stopCalled)
+        public override Task OnDisconnectedAsync(Exception exception)
         {
             // TODO Handle all the problems caused by disconnecting players.
             ////var player = Players.Single(_ => _.HasSameIdentifierAs(;
@@ -92,14 +98,7 @@ namespace SecretHitler.Server
             ////BroadcastMessageImpl($"Client {player.Name} disconnected.");
 
             ////Clients.All.UpdatePlayerStates(Players);
-            return base.OnDisconnected(stopCalled);
-        }
-
-        private void BroadcastMessageImpl(string message)
-        {
-            // TODO Broadcast predefined server messages with enum instead of as string to support localization, if we care.
-            Console.WriteLine(message);
-            Clients.All.MessageReceived(message);
+            return base.OnDisconnectedAsync(exception);
         }
     }
 }

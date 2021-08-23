@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Serialization;
+
+using SecretHitler.Game.Engine;
 using SecretHitler.Game.Enums;
 
 namespace SecretHitler.Game.Entities
@@ -17,9 +20,14 @@ namespace SecretHitler.Game.Entities
         public Guid GameGuid { get; set; } = Guid.NewGuid();
 
         /// <summary>
+        /// The current state of the machine.
+        /// </summary>
+        public StateMachineState MachineState { get; set; } = StateMachineState.None;
+
+        /// <summary>
         /// All known players.
         /// </summary>
-        public List<PlayerData> Players { get; set; } = new List<PlayerData>();
+        public IList<PlayerData> Players { get; set; } = new List<PlayerData>();
 
         /// <summary>
         /// Current value of the election tracker.
@@ -37,6 +45,12 @@ namespace SecretHitler.Game.Entities
         public IList<PolicyType> DiscardPile { get; set; } = new List<PolicyType>();
 
         /// <summary>
+        /// The last policies drawn from the deck. This accommodates discarding cards when getting a response
+        /// from the player.
+        /// </summary>
+        public List<PolicyType> DrawnPolicies { get; set; }
+
+        /// <summary>
         /// The number of enacted liberal policies.
         /// </summary>
         public int EnactedLiberalPolicyCount { get; set; }
@@ -45,6 +59,16 @@ namespace SecretHitler.Game.Entities
         /// The number of enacted liberal policies.
         /// </summary>
         public int EnactedFascistPolicyCount { get; set; }
+
+        /// <summary>
+        /// Ja vote count
+        /// </summary>
+        public int JaVoteCount { get; set; }
+
+        /// <summary>
+        /// Nein vote count
+        /// </summary>
+        public int NeinVoteCount { get; set; }
 
         /// <summary>
         /// The queue of presidents.

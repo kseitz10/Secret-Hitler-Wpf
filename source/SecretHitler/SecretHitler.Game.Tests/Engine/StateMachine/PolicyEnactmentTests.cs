@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using SecretHitler.Game.Engine;
@@ -24,30 +26,30 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
         }
 
         [TestMethod]
-        public void VetoPowerIsUnavailableWithFewerThanFiveFascistPolicies()
+        public async Task VetoPowerIsUnavailableWithFewerThanFiveFascistPolicies()
         {
             var president = Players.First();
             president.IsPresident = true;
             var chancellor = Players.Skip(1).First();
             chancellor.IsChancellor = true;
-            StateMachine.DrawnPolicies = new List<PolicyType>() { PolicyType.Fascist, PolicyType.Fascist };
-            StateMachine.MachineState = StateMachineState.AwaitingPresidentialPolicies;
+            GameData.DrawnPolicies = new List<PolicyType>() { PolicyType.Fascist, PolicyType.Fascist };
+            GameData.MachineState = StateMachineState.AwaitingPresidentialPolicies;
             GameData.EnactedFascistPolicyCount = Constants.MinFascistPolicyCountForVeto - 1;
-            StateMachine.PoliciesSelected(new[] { PolicyType.Fascist, PolicyType.Liberal });
+            await StateMachine.PoliciesSelected(new[] { PolicyType.Fascist, PolicyType.Liberal });
             Director.Verify(_ => _.GetEnactedPolicy(chancellor, It.IsAny<IEnumerable<PolicyType>>(), false));
         }
 
         [TestMethod]
-        public void VetoPowerIsAvailableWithFiveFascistPolicies()
+        public async Task VetoPowerIsAvailableWithFiveFascistPolicies()
         {
             var president = Players.First();
             president.IsPresident = true;
             var chancellor = Players.Skip(1).First();
             chancellor.IsChancellor = true;
-            StateMachine.DrawnPolicies = new List<PolicyType>() { PolicyType.Fascist, PolicyType.Fascist };
-            StateMachine.MachineState = StateMachineState.AwaitingPresidentialPolicies;
+            GameData.DrawnPolicies = new List<PolicyType>() { PolicyType.Fascist, PolicyType.Fascist };
+            GameData.MachineState = StateMachineState.AwaitingPresidentialPolicies;
             GameData.EnactedFascistPolicyCount = Constants.MinFascistPolicyCountForVeto;
-            StateMachine.PoliciesSelected(new[] { PolicyType.Fascist, PolicyType.Liberal });
+            await StateMachine.PoliciesSelected(new[] { PolicyType.Fascist, PolicyType.Liberal });
             Director.Verify(_ => _.GetEnactedPolicy(chancellor, It.IsAny<IEnumerable<PolicyType>>(), true));
         }
 

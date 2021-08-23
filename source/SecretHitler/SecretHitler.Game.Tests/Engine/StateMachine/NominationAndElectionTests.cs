@@ -8,6 +8,7 @@ using SecretHitler.Game.Interfaces;
 using SecretHitler.Game.Utility;
 using SecretHitler.Game.Entities;
 using System;
+using System.Threading.Tasks;
 
 namespace SecretHitler.Game.Tests.Engine.StateMachine
 {
@@ -15,30 +16,30 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
     public class NominationAndElectionTests : GameStateMachineTestFixture
     {
         [TestMethod]
-        public void SpecialElectionUsesDesignatedPlayer()
+        public async Task SpecialElectionUsesDesignatedPlayer()
         {
             Manipulator.Object.ResetGame();
             var currentPresident = Manipulator.Object.GetPresidentFromQueue();
             var expected = Players.First(_ => _.Identifier != currentPresident.Identifier);
-            StateMachine.MachineState = StateMachineState.AwaitingSpecialElectionPick;
-            StateMachine.PlayerSelected(expected);
-            Assert.AreEqual(expected, StateMachine.GameData.President, "President should be updated");
+            GameData.MachineState = StateMachineState.AwaitingSpecialElectionPick;
+            await StateMachine.PlayerSelected(expected);
+            Assert.AreEqual(expected, GameData.President, "President should be updated");
         }
 
         [TestMethod]
-        public void SpecialElectionDoesNotAffectPresidentialQueue()
+        public async Task SpecialElectionDoesNotAffectPresidentialQueue()
         {
             Manipulator.Object.ResetGame();
             var currentPresident = Manipulator.Object.GetPresidentFromQueue();
-            var nextPresident = StateMachine.GameData.PresidentialQueue.Peek();
+            var nextPresident = GameData.PresidentialQueue.Peek();
             var unexpected = Players.First(_ => _.Identifier != currentPresident.Identifier && _.Identifier != nextPresident);
-            StateMachine.MachineState = StateMachineState.AwaitingSpecialElectionPick;
-            StateMachine.PlayerSelected(unexpected);
-            Assert.AreEqual(nextPresident, StateMachine.GameData.PresidentialQueue.Peek(), "Next president should not change");
+            GameData.MachineState = StateMachineState.AwaitingSpecialElectionPick;
+            await StateMachine.PlayerSelected(unexpected);
+            Assert.AreEqual(nextPresident, GameData.PresidentialQueue.Peek(), "Next president should not change");
         }
 
         [TestMethod]
-        public void ChancellorCandidateListOnlyContainsValidPlayers()
+        public async Task ChancellorCandidateListOnlyContainsValidPlayers()
         {
             ResetPlayers(Constants.MaxPlayerCount);
             Manipulator.Object.ResetGame();
@@ -54,8 +55,8 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
             GameData.IneligibleChancellors.Add(eligibleVoters.Dequeue());
             eligibleVoters.Dequeue().IsAlive = false;
             eligibleVoters.Dequeue().IsAlive = false;
-            StateMachine.MachineState = StateMachineState.AwaitingNomination;
-            StateMachine.PlayerSelected(failedChancellor);
+            GameData.MachineState = StateMachineState.AwaitingNomination;
+            await StateMachine.PlayerSelected(failedChancellor);
             eligibleVoters.Enqueue(failedPresident);
             eligibleVoters.Enqueue(failedChancellor);
 
@@ -86,27 +87,27 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
             }));
 
             // Fail the election and investigate the resulting candidates offered to the next president.
-            VotesCollected(Enumerable.Range(0, Players.Count(_ => _.IsAlive)).Select(_ => false));
+            await VotesCollected(Enumerable.Range(0, Players.Count(_ => _.IsAlive)).Select(_ => false));
 
             if (!success)
                 Assert.Fail("Did not get correct candidate list.");
         }
 
         [TestMethod]
-        public void SelectingNominationTriggersVotingStage()
+        public async Task SelectingNominationTriggersVotingStage()
         {
             var president = Players.First();
             var nomination = Players.Skip(1).First();
             Players.Skip(2).First().IsAlive = false;
-            StateMachine.MachineState = StateMachineState.AwaitingNomination;
-            StateMachine.PlayerSelected(nomination);
+            GameData.MachineState = StateMachineState.AwaitingNomination;
+            await StateMachine.PlayerSelected(nomination);
             Assert.AreEqual(nomination, GameData.Chancellor, "Chancellor should be assigned");
-            Assert.AreEqual(StateMachine.MachineState, StateMachineState.AwaitingVotes);
+            Assert.AreEqual(GameData.MachineState, StateMachineState.AwaitingVotes);
             Director.Verify(prox => prox.GetVotes(It.Is<IEnumerable<Guid>>(voters => voters.Count() == Players.Count(_ => _.IsAlive) && voters.AsPlayers(Players).All(v => v.IsAlive))));
         }
 
         [TestMethod]
-        public void MajorityVoteCompletesElectionAndDeliversPolicies()
+        public async Task MajorityVoteCompletesElectionAndDeliversPolicies()
         {
             const int Pass = 4;
             const int Fail = 3;
@@ -114,18 +115,18 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
 
             var president = Players.First();
             president.IsPresident = true;
-            StateMachine.MachineState = StateMachineState.AwaitingVotes;
+            GameData.MachineState = StateMachineState.AwaitingVotes;
             GameData.ElectionTracker = 1;
 
-            VotesCollected(Enumerable.Range(0, Pass).Select(_ => true).Concat(Enumerable.Range(0, Fail).Select(_ => false)));
+            await VotesCollected(Enumerable.Range(0, Pass).Select(_ => true).Concat(Enumerable.Range(0, Fail).Select(_ => false)));
 
-            Assert.AreEqual(StateMachine.MachineState, StateMachineState.AwaitingPresidentialPolicies);
+            Assert.AreEqual(GameData.MachineState, StateMachineState.AwaitingPresidentialPolicies);
             Assert.AreEqual(1, GameData.ElectionTracker, "Election tracker should not reset until policy is passed.");
             Director.Verify(_ => _.GetPresidentialPolicies(president, It.Is<IEnumerable<PolicyType>>(d => d.Count() == Constants.PresidentialPolicyDrawCount)));
         }
 
         [TestMethod]
-        public void NonMajorityVoteFailsElection()
+        public async Task NonMajorityVoteFailsElection()
         {
             const int Pass = 3;
             const int Fail = 3;
@@ -134,12 +135,12 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
 
             var president = Players.First();
             president.IsPresident = true;
-            StateMachine.MachineState = StateMachineState.AwaitingVotes;
+            GameData.MachineState = StateMachineState.AwaitingVotes;
             GameData.ElectionTracker = 1;
 
-            VotesCollected(Enumerable.Range(0, Pass).Select(_ => true).Concat(Enumerable.Range(0, Fail).Select(_ => false)));
+            await VotesCollected(Enumerable.Range(0, Pass).Select(_ => true).Concat(Enumerable.Range(0, Fail).Select(_ => false)));
 
-            Assert.AreEqual(StateMachine.MachineState, StateMachineState.AwaitingNomination);
+            Assert.AreEqual(GameData.MachineState, StateMachineState.AwaitingNomination);
             Manipulator.Verify(_ => _.UpdateElectionTracker(null));
             Manipulator.Verify(_ => _.GetPresidentFromQueue());
         }

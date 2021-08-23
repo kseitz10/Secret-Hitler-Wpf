@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using SecretHitler.Game.Entities;
@@ -52,18 +53,20 @@ namespace SecretHitler.Game.Engine
             liberals.Skip(fascistCount).First().Role = PlayerRole.Hitler;
 
             // Set up the presidential queue
-            var shuffled = Game.Players.Select(_ => _.Identifier).ToList();
+            var shuffled = Game.Players.Select(p => p.Identifier).ToList();
             shuffled.Shuffle();
             Game.PresidentialQueue = new Queue<Guid>(shuffled);
-            Game.Players = Game.PresidentialQueue.Join(Game.Players, _ => _, _ => _.Identifier, (o, i) => i).ToList();
+            Game.Players = new List<PlayerData>(Game.PresidentialQueue.Join(Game.Players, o => o, i => i.Identifier, (o, i) => i).ToList());
 
             Game.IneligibleChancellors = new List<Guid>();
             Game.EnactedFascistPolicyCount = 0;
             Game.EnactedLiberalPolicyCount = 0;
             Game.ElectionTracker = 0;
             Game.GameGuid = Guid.NewGuid();
+            Game.JaVoteCount = 0;
+            Game.NeinVoteCount = 0;
 
-            new PolicyDeck(Game.DrawPile, Game.DiscardPile, true);
+            var _ = new PolicyDeck(Game.DrawPile, Game.DiscardPile, true);
         }
 
         /// <summary>

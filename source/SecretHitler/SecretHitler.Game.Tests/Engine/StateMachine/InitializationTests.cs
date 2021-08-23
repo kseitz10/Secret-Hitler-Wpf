@@ -5,6 +5,8 @@ using Moq;
 using SecretHitler.Game.Engine;
 using SecretHitler.Game.Enums;
 using System;
+using System.Threading.Tasks;
+
 using SecretHitler.Game.Utility;
 
 namespace SecretHitler.Game.Tests.Engine.StateMachine
@@ -15,20 +17,20 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
         [TestMethod]
         public void StateMachineInitializesWithDefaultValues()
         {
-            Assert.AreEqual(StateMachineState.None, StateMachine.MachineState, nameof(StateMachine.MachineState));
+            Assert.AreEqual(StateMachineState.None, StateMachine.GameData.MachineState, nameof(StateMachine.GameData.MachineState));
             Assert.AreSame(Director.Object, StateMachine.Director, nameof(StateMachine.Director));
         }
 
         [TestMethod]
-        public void StartGameResetsGameData()
+        public async Task StartGameResetsGameData()
         {
             AddPlayers(Constants.MaxPlayerCount);
-            StateMachine.Start();
+            await StateMachine.Start();
             Manipulator.Verify(_ => _.ResetGame());
         }
 
         [TestMethod]
-        public void PolicyDeckUsesDtoDrawPile()
+        public async Task PolicyDeckUsesDtoDrawPile()
         {
             var originalValue = GameData.DrawPile.Count;
             const int numToDraw = 2;
@@ -38,7 +40,7 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
         }
 
         [TestMethod]
-        public void PolicyDeckUsesDtoDiscardPile()
+        public async Task PolicyDeckUsesDtoDiscardPile()
         {
             var originalValue = GameData.DrawPile.Count;
             const int numToDraw = 2;
@@ -49,10 +51,10 @@ namespace SecretHitler.Game.Tests.Engine.StateMachine
         }
 
         [TestMethod]
-        public void StartGameEntersNominationState()
+        public async Task StartGameEntersNominationState()
         {
-            StateMachine.Start();
-            Assert.AreEqual(StateMachineState.AwaitingNomination, StateMachine.MachineState, "Machine state");
+            await StateMachine.Start();
+            Assert.AreEqual(StateMachineState.AwaitingNomination, StateMachine.GameData.MachineState, "Machine state");
             Assert.AreEqual(1, Players.Count(p => p.IsPresident), "One player should be presidential candidate.");
             Assert.AreEqual(0, Players.Count(p => p.IsChancellor), "The chancellor should not be assigned.");
             Director.Verify(_ => _.SelectPlayer(
