@@ -52,7 +52,7 @@ namespace SecretHitler.Game.Engine
             return Task.CompletedTask;
         }
 
-        public Task UpdateGameData(GameData gameData)
+        public Task UpdateGameData(GameDataDto gameData)
         {
             // Intentionally blank, but a good AI would do something with this information.
             return Task.CompletedTask;

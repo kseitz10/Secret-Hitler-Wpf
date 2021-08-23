@@ -35,7 +35,7 @@ namespace SecretHitler.UI.ViewModels
         private string _messages = string.Empty;
         private string _messageToSend = string.Empty;
         private RelayCommand _sendMessageCommand;
-        private GameData _gameData;
+        private GameDataDto _gameData;
         private InteractionViewModelBase _activeModal;
 
         #region Properties
@@ -50,7 +50,7 @@ namespace SecretHitler.UI.ViewModels
         /// <summary>
         /// The players in the game.
         /// </summary>
-        public IEnumerable<IPlayerInfo> Players => _gameData?.Players ?? new List<PlayerData>();
+        public IEnumerable<IPlayerInfo> Players => _gameData?.Players ?? new List<PlayerDto>();
 
         /// <summary>
         /// The number of enacted fascist policies.
@@ -133,7 +133,7 @@ namespace SecretHitler.UI.ViewModels
 
         #region Event Handlers
 
-        public Task UpdateGameData(GameData gameData)
+        public Task UpdateGameData(GameDataDto gameData)
         {
             Dispatch(() =>
             {
@@ -199,10 +199,10 @@ namespace SecretHitler.UI.ViewModels
 
         public Task<bool> GetVote()
         {
-            return Dispatch(() => ShowModalAsync(new VoteViewModel()
+            return Dispatch(() => ShowModalAsync(new VoteViewModel
             {
-                PresidentName = _gameData.President.Name,
-                ChancellorName = _gameData.Chancellor.Name
+                PresidentName = _gameData.Players.FirstOrDefault(_ => _.IsPresident)?.Name,
+                ChancellorName = _gameData.Players.FirstOrDefault(_ => _.IsChancellor)?.Name
             }));
         }
 
@@ -226,7 +226,7 @@ namespace SecretHitler.UI.ViewModels
 
         public Task RevealLoyalty(Guid playerGuid, PlayerRole role)
         {
-            return Dispatch(async () => await ShowModalAsync(new LoyaltyDisplayViewModel(_gameData.Players.First(_ => _ == playerGuid), role)));
+            return Dispatch(async () => await ShowModalAsync(new LoyaltyDisplayViewModel(_gameData.Players.First(_ => _.Identifier == playerGuid), role)));
         }
 
         public Task<bool> PromptForVetoApproval()

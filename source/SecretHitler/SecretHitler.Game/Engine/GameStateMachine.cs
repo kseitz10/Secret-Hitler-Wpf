@@ -306,16 +306,15 @@ namespace SecretHitler.Game.Engine
 
         #region Private Methods
 
-        private GameData PrepareGameDataForPlayerDissemination(IPlayerInfo player)
+        private GameDataDto PrepareGameDataForPlayerDissemination(IPlayerInfo player)
         {
             // This data can be given to all players.
-            var gd = new GameData
+            var gd = new GameDataDto
             {
                 GameGuid = GameData.GameGuid,
                 EnactedFascistPolicyCount = GameData.EnactedFascistPolicyCount,
                 EnactedLiberalPolicyCount = GameData.EnactedLiberalPolicyCount,
-                ElectionTracker = GameData.ElectionTracker,
-                PresidentialQueue = new Queue<Guid>(GameData.PresidentialQueue)
+                ElectionTracker = GameData.ElectionTracker
             };
 
             var canDiscloseFascists = player.Role == PlayerRole.Fascist ||
@@ -345,7 +344,15 @@ namespace SecretHitler.Game.Engine
 
             foreach (var p in playersEnumerable)
             {
-                gd.Players.Add(p);
+                gd.Players.Add(new PlayerDto
+                {
+                    Identifier = p.Identifier,
+                    IsAlive = p.IsAlive,
+                    IsChancellor = p.IsChancellor,
+                    IsPresident = p.IsPresident,
+                    Name = p.Name,
+                    Role = p.Role
+                });
             }
 
             return gd;

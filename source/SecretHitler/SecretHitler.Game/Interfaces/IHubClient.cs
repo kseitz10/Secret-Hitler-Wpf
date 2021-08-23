@@ -12,7 +12,7 @@ namespace SecretHitler.Game.Interfaces
     public interface IHubClient
     {
         Task MessageReceived(string message);
-        Task UpdateGameData(GameData gameData);
+        Task UpdateGameData(GameDataDto gameData);
         Task PlayerSelectionRequested(GameState gameState, IEnumerable<Guid> players);
         Task PlayerVoteRequested();
         Task PolicySelectionRequested(IEnumerable<PolicyType> policies, int count, bool vetoAllowed);

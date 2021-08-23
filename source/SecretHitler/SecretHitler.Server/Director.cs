@@ -38,7 +38,7 @@ namespace SecretHitler.Server
             await GetUser(player).MessageReceived(message);
         }
 
-        public async Task UpdateGameData(Guid player, GameData gameData)
+        public async Task UpdateGameData(Guid player, GameDataDto gameData)
         {
             _logger.LogDebug($"Transmit {nameof(IHubClient.UpdateGameData)} to player {player}");
             await GetUser(player).UpdateGameData(gameData);

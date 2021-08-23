@@ -57,7 +57,7 @@ namespace SecretHitler.UI.Utility
             //// _connection.Closed += Connection_Closed;
 
             _connection.On<string>(nameof(IHubClient.MessageReceived), _ => ClientUI?.MessageReceived(_));
-            _connection.On<GameData>(nameof(IHubClient.UpdateGameData), _ => ClientUI?.UpdateGameData(_));
+            _connection.On<GameDataDto>(nameof(IHubClient.UpdateGameData), _ => ClientUI?.UpdateGameData(_));
             _connection.On<GameState, IEnumerable<Guid>>(nameof(IHubClient.PlayerSelectionRequested), async (state, players) => PlayerSelected(await ClientUI?.SelectPlayer(state, players)));
             _connection.On(nameof(IHubClient.PlayerVoteRequested), async () => VoteSelected(await ClientUI?.GetVote()));
             _connection.On<IEnumerable<PolicyType>, int, bool>(nameof(IHubClient.PolicySelectionRequested), async (policies, ct, veto) => PoliciesSelected(await ClientUI?.SelectPolicies(policies, ct, veto)));

@@ -12,7 +12,7 @@ namespace SecretHitler.Game.Interfaces
     /// </summary>
     public interface IPlayerDirector
     {
-        Task UpdateGameData(Guid player, GameData gameData);
+        Task UpdateGameData(Guid player, GameDataDto gameData);
 
         Task Broadcast(string message);
 
